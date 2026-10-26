@@ -5,6 +5,7 @@ Recalcular cria uma nova execução e marca as anteriores como substituídas (Ap
 
 import calendar
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import date, timedelta
 from decimal import Decimal
 from typing import Any
@@ -111,9 +112,20 @@ def load_rules(db: Session) -> tuple[list[RuleSpec], list[dict[str, Any]]]:
     return specs, snapshot
 
 
-def run_calculation(
-    db: Session, *, period_start: date, period_end: date, actor: str | None
-) -> CalculationRun:
+@dataclass
+class PeriodInputs:
+    """Entradas do motor para um período, já agrupadas por mês de competência."""
+
+    months: list[date]
+    rules: list[RuleSpec]
+    rule_snapshot: list[dict[str, Any]]
+    default_drivers: dict[int, tuple[int, str]]
+    expenses: dict[date, list[ExpenseFact]]
+    activities: dict[date, list[ActivityFact]]
+    budgets: dict[date, dict]
+
+
+def load_inputs(db: Session, period_start: date, period_end: date) -> PeriodInputs:
     months = check_period(period_start, period_end)
     rules, snapshot = load_rules(db)
     default_drivers = {
@@ -149,6 +161,23 @@ def run_calculation(
     ):
         budgets_by_month[b.period_start.replace(day=1)][(b.unit_id, b.process_id)] += b.amount
 
+    return PeriodInputs(
+        months,
+        rules,
+        snapshot,
+        default_drivers,
+        expenses_by_month,
+        activities_by_month,
+        budgets_by_month,
+    )
+
+
+def run_calculation(
+    db: Session, *, period_start: date, period_end: date, actor: str | None
+) -> CalculationRun:
+    inputs = load_inputs(db, period_start, period_end)
+    months, rules, snapshot = inputs.months, inputs.rules, inputs.rule_snapshot
+
     run = CalculationRun(
         period_start=period_start,
         period_end=period_end,
@@ -164,11 +193,11 @@ def run_calculation(
     for month in months:
         result = calculate_month(
             month,
-            expenses_by_month.get(month, []),
-            activities_by_month.get(month, []),
-            budgets_by_month.get(month, {}),
+            inputs.expenses.get(month, []),
+            inputs.activities.get(month, []),
+            inputs.budgets.get(month, {}),
             rules,
-            default_drivers,
+            inputs.default_drivers,
         )
         db.add_all(
             CostResult(

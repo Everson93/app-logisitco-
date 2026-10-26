@@ -7,6 +7,8 @@ import type {
   Page,
   Preview,
   ProcessItem,
+  ScenarioInput,
+  ScenarioResult,
   Summary,
   TrendPoint,
   Validation,
@@ -82,6 +84,8 @@ export const api = {
       "/calculations/run",
       json("POST", { period_start: periodStart, period_end: periodEnd }),
     ),
+  simulate: (body: ScenarioInput) =>
+    request<ScenarioResult>("/scenarios/simulate", json("POST", body)),
   runs: () => request<Page<CalculationRun>>("/calculations?page_size=10"),
 
   preview: (file: File, fileType: FileType, sheet?: string) => {
