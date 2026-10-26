@@ -94,7 +94,7 @@ Prévia e validação de cada arquivo levam menos de 0,2 s numa máquina de dese
 
 ## Próximos passos
 
-1. **Fase 4 da especificação:** indicadores específicos de transporte, armazenagem e picking, e simulação de cenários ("e se o volume subir 10%?" ou "e se o rateio for por pedidos?").
+1. **Fase 4 da especificação:** a variação por volume e eficiência e o simulador de cenários já estão prontos. Faltam os indicadores específicos de transporte (custo por km, ocupação, frota própria x terceira) e de armazenagem e picking (produtividade por hora), que pedem dados novos na importação.
 2. Autenticação com perfis Administrador, Analista e Leitor.
 3. Telas de cadastro e regras de rateio em cascata.
 4. Publicação com Docker do backend e do frontend, HTTPS e backup.

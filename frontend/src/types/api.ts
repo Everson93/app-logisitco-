@@ -107,6 +107,43 @@ export interface Variance {
   alerts: DashboardAlert[];
 }
 
+export interface ScenarioItem {
+  process_id: number | null;
+  process_code: string | null;
+  process_name: string;
+  volume_change_percent: Decimal;
+  driver_uom: string | null;
+  base_cost: Decimal;
+  scenario_cost: Decimal;
+  change: Decimal;
+  change_percent: Decimal | null;
+  base_volume: Decimal | null;
+  scenario_volume: Decimal | null;
+  base_unit_cost: Decimal | null;
+  scenario_unit_cost: Decimal | null;
+}
+
+export interface ScenarioResult {
+  period: { from: string; to: string };
+  currency: string;
+  base_cost: Decimal;
+  scenario_cost: Decimal;
+  change: Decimal;
+  change_percent: Decimal | null;
+  base_pending: Decimal;
+  scenario_pending: Decimal;
+  items: ScenarioItem[];
+  alerts: DashboardAlert[];
+}
+
+export interface ScenarioInput {
+  period_start: string;
+  period_end: string;
+  volume_changes: { process_code: string; percent: string }[];
+  variable_cost_share: string;
+  allocation_driver_code: string | null;
+}
+
 export interface CalculationRun {
   id: number;
   period_start: string;

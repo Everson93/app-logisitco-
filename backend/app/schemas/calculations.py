@@ -117,3 +117,23 @@ class CalculationIssueOut(BaseModel):
     expense_id: int | None
     amount: Decimal | None
     message: str
+
+
+class VolumeChange(BaseModel):
+    process_code: str
+    percent: Decimal = Field(ge=-100, le=1000, description="Variação do volume, em %.")
+
+
+class ScenarioIn(BaseModel):
+    period_start: date
+    period_end: date
+    volume_changes: list[VolumeChange] = Field(default_factory=list, max_length=50)
+    variable_cost_share: Decimal = Field(
+        default=Decimal(1),
+        ge=0,
+        le=1,
+        description="Parcela do custo direto que acompanha o volume (1 = totalmente variável).",
+    )
+    allocation_driver_code: str | None = Field(
+        default=None, description="Rateia os custos compartilhados por outro direcionador."
+    )

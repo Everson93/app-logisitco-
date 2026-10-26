@@ -66,11 +66,14 @@ body {
 
 .tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   flex: 1;
+  min-width: 0;
 }
 
 .tab {
+  white-space: nowrap;
   background: transparent;
   color: var(--text);
   border: 1px solid transparent;
@@ -391,4 +394,38 @@ details {
   .grid-2 {
     grid-template-columns: 1fr;
   }
+}
+
+/* Simulação de cenários */
+.scenario-form .filters {
+  border: none;
+  padding: 0;
+}
+
+.volume-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.input-suffix {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+}
+
+.input-suffix input {
+  width: 100%;
+  text-align: right;
+}
+
+.share input[type="range"] {
+  padding: 0;
+  max-width: 360px;
+}
+
+.share strong {
+  color: var(--text);
 }

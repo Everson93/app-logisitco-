@@ -39,7 +39,7 @@ O custo de cada processo logístico (recebimento, armazenagem, picking, expediç
 | 2 — cálculo | Regras de rateio, execuções de cálculo, orçamento | ✅ concluída |
 | 3 — visualização | Dashboard, filtros e relatório CSV | ✅ concluída |
 | Documentação | README, diagramas, dicionário de dados, segurança e estudo de caso | ✅ concluída |
-| 4 — expansão | Variação por volume e eficiência ✅; cenários, transporte, armazenagem e picking | em andamento |
+| 4 — expansão | Variação por volume e eficiência ✅; simulador de cenários ✅; transporte, armazenagem e picking | em andamento |
 
 ## Stack
 
@@ -176,6 +176,26 @@ Todas as rotas recebem `from` e `to` (datas) e, opcionalmente, `unit_id` e `proc
 Na variação, o efeito volume é quanto o custo mudaria só pela mudança de volume, mantido o custo unitário do período base. O efeito eficiência é o restante: a mudança do custo por unidade. Processos sem volume nos dois períodos, ou com mais de um direcionador, não são decompostos e entram em `not_comparable`, de modo que volume + eficiência + não comparável sempre fecha com a variação total.
 
 O custo unitário só é calculado quando o recorte tem **um único direcionador**. Com mais de um, a API devolve N/D e o alerta `MIXED_DRIVERS`, porque custo por palete e custo por pedido não se somam (seção 5.4). Valores monetários chegam como texto decimal para não perder precisão.
+
+## Simulação de cenários (API)
+
+`POST /api/v1/scenarios/simulate` recalcula um período com as regras atuais e entradas alteradas, **sem gravar nada**: não cria execução de cálculo nem muda regras. No frontend, fica na aba **Cenários**.
+
+```json
+{
+  "period_start": "2026-07-01",
+  "period_end": "2026-09-30",
+  "volume_changes": [{"process_code": "PICK", "percent": "10"}],
+  "variable_cost_share": "0.6",
+  "allocation_driver_code": "order_picked"
+}
+```
+
+- **`volume_changes`:** variação % do volume de cada processo, de −100% a +1000%.
+- **`variable_cost_share`:** de 0 a 1, quanto do custo direto acompanha o volume. Com `0.6` e volume +10%, o custo direto do processo sobe 6%. É uma premissa do usuário, não um dado: o padrão `1` trata todo custo direto como variável.
+- **`allocation_driver_code`:** rateia os custos compartilhados por outro direcionador. Se não houver volume desse direcionador, o valor fica pendente e a resposta traz o alerta `SCENARIO_PENDING`.
+
+A resposta compara custo, volume e custo unitário atuais e no cenário, por processo e no total. Com os dados de demonstração, ratear o custo compartilhado por pedidos separados em vez de paletes recebidos tira R$ 90 mil do Recebimento e leva para a Separação.
 
 ## Testes
 
