@@ -51,6 +51,7 @@ def test_resumo_do_exemplo_da_especificacao(client):
     assert cd["composition"] == {
         "direct": D("180000.0"),
         "allocated": D("7500.0"),
+        "transferred": D("0"),
         "excluded": D("999.0"),
         "pending": D("0.0"),
     }

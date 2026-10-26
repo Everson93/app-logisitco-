@@ -37,26 +37,32 @@ Arquitetura e modelo de dados estão em [arquitetura.md](arquitetura.md).
 
 ## Resultados com os dados de demonstração
 
-Período: julho a setembro de 2026, 3 unidades e 5 processos. Os dados têm 36 despesas (inclusive R$ 30.000 por mês de custo compartilhado do CD e a frota própria do transporte), 48 registros de volume (inclusive horas produtivas e linhas separadas) e 33 linhas de orçamento. A regra de demonstração rateia o custo compartilhado do CD por paletes recebidos.
+Período: julho a setembro de 2026, 3 unidades, 5 processos operacionais e um de apoio (a administração do CD). Os dados têm 39 despesas (inclusive R$ 30.000 por mês de custo compartilhado do CD, a frota própria do transporte e R$ 44.400 de administração do CD no trimestre), 48 registros de volume (inclusive horas produtivas e linhas separadas) e 33 linhas de orçamento. Uma regra rateia o custo compartilhado do CD por paletes recebidos; outra repassa em cascata a administração do CD aos processos operacionais pelas horas produtivas.
 
 | Indicador | Valor |
 | --- | --- |
-| Custo realizado | R$ 796.022,40 |
-| Custo direto | R$ 706.022,40 |
+| Custo realizado | R$ 840.422,40 |
+| Custo direto | R$ 750.422,40 |
 | Custo rateado | R$ 90.000,00 |
 | Pendente | R$ 0,00 |
 | Orçamento | R$ 696.300,00 |
-| Desvio | R$ 99.722,40 (+14,32%) |
+| Desvio | R$ 144.122,40 (+20,70%) |
 
-| Processo | Realizado | Orçamento | Desvio | Custo unitário |
-| --- | --- | --- | --- | --- |
-| REC · Recebimento | R$ 196.656,00 | R$ 105.600,00 | +86,23% | R$ 3,4016 por palete |
-| TRANS · Transporte | R$ 192.134,40 | R$ 187.500,00 | +2,47% | R$ 339,4601 por viagem |
-| PICK · Separação / picking | R$ 163.620,00 | R$ 162.000,00 | +1,00% | R$ 4,5755 por pedido |
-| ARM · Armazenagem | R$ 161.802,00 | R$ 160.200,00 | +1,00% | R$ 1,4835 por posição-dia |
-| EXP · Expedição | R$ 81.810,00 | R$ 81.000,00 | +1,00% | R$ 1,8302 por palete |
+| Processo | Realizado | Cascata | Orçamento | Desvio | Custo unitário |
+| --- | --- | --- | --- | --- | --- |
+| REC · Recebimento | R$ 208.369,41 | +R$ 11.713,41 | R$ 105.600,00 | +97,32% | R$ 3,6043 por palete |
+| TRANS · Transporte | R$ 192.134,40 | | R$ 187.500,00 | +2,47% | R$ 339,4601 por viagem |
+| PICK · Separação / picking | R$ 187.476,11 | +R$ 23.856,11 | R$ 162.000,00 | +15,73% | R$ 5,2426 por pedido |
+| ARM · Armazenagem | R$ 161.802,00 | | R$ 160.200,00 | +1,00% | R$ 1,4835 por posição-dia |
+| EXP · Expedição | R$ 90.640,48 | +R$ 8.830,48 | R$ 81.000,00 | +11,90% | R$ 2,0278 por palete |
+| ADM · Administração do CD | R$ 0,00 | −R$ 44.400,00 | | | |
 
-**Leitura.** Os demais processos estão entre 1% e 2,5% acima do orçamento. Quase todo o desvio de R$ 99,7 mil vem do Recebimento, que recebeu os R$ 90 mil de custo compartilhado, porque a regra rateia por *paletes recebidos* e só o REC tem esse volume. O orçamento não previa esse rateio.
+**Leitura.** O desvio de R$ 144,1 mil tem duas origens que o orçamento não previa:
+
+- **Rateio do custo compartilhado:** R$ 90 mil foram para o Recebimento, porque a regra rateia por *paletes recebidos* e só o REC tem esse volume.
+- **Cascata da administração do CD:** R$ 44,4 mil foram repassados pelas horas produtivas. O picking, com mais horas, ficou com mais da metade (R$ 23,9 mil).
+
+Sem esses dois repasses, os processos estariam entre 1% e 2,5% acima do orçamento.
 
 O sistema não diz que o Recebimento ficou caro. Ele mostra que **a política de rateio concentra o custo compartilhado num único processo**, e o detalhe do rateio (`/calculations/{id}/allocations`) mostra exatamente quanto saiu de cada despesa. Uma regra por outro direcionador, ou um orçamento que inclua o rateio, muda a leitura. Essa é a discussão que a ferramenta deve provocar.
 
@@ -80,14 +86,14 @@ A ocupação subiu todo mês e o custo por palete caiu em agosto, mas setembro v
 
 Os indicadores da seção 5.8 separam o custo unitário em direto e rateado e medem a produtividade pelas horas produtivas do CD:
 
-| Processo | Custo unitário | Direto | Rateado | Produtividade | Custo por hora |
-| --- | --- | --- | --- | --- | --- |
-| REC | R$ 3,4016 / palete | R$ 1,8449 | R$ 1,5568 | 15,26 paletes / h | R$ 48,57 |
-| ARM | R$ 1,4835 / posição-dia | R$ 1,4835 | R$ 0,00 | N/D | N/D |
-| PICK | R$ 4,5755 / pedido | R$ 4,5755 | R$ 0,00 | 5,99 pedidos / h | R$ 27,41 |
-| EXP | R$ 1,8302 / palete | R$ 1,8302 | R$ 0,00 | 20,23 paletes / h | R$ 37,02 |
+| Processo | Custo unitário | Direto | Rateado | Cascata | Produtividade | Custo por hora |
+| --- | --- | --- | --- | --- | --- | --- |
+| REC | R$ 3,6043 / palete | R$ 1,8449 | R$ 1,5568 | R$ 0,2026 | 15,26 paletes / h | R$ 52,57 |
+| ARM | R$ 1,4835 / posição-dia | R$ 1,4835 | R$ 0,00 | R$ 0,00 | N/D | N/D |
+| PICK | R$ 5,2426 / pedido | R$ 4,5755 | R$ 0,00 | R$ 0,6671 | 5,99 pedidos / h | R$ 31,40 |
+| EXP | R$ 2,0278 / palete | R$ 1,8302 | R$ 0,00 | R$ 0,1975 | 20,23 paletes / h | R$ 41,01 |
 
-Quase metade do custo por palete do Recebimento vem do rateio, o que reforça a leitura acima. A armazenagem não tem horas apontadas nos dados de demonstração, então aparece N/D com o alerta `NO_PRODUCTIVE_HOURS` em vez de um número inventado.
+Quase metade do custo por palete do Recebimento vem do rateio, o que reforça a leitura acima. A armazenagem não recebe nada da cascata porque não tem horas apontadas. A armazenagem não tem horas apontadas nos dados de demonstração, então aparece N/D com o alerta `NO_PRODUCTIVE_HOURS` em vez de um número inventado.
 
 | Picking | Julho | Agosto | Setembro |
 | --- | --- | --- | --- |
@@ -117,19 +123,17 @@ Prévia e validação de cada arquivo levam menos de 0,2 s numa máquina de dese
 | Processos com custo unitário calculado | 5 de 5. |
 | Alertas de qualidade encontrados | 5 erros e 2 avisos nos casos inválidos; `OVER_BUDGET` e `MIXED_DRIVERS` no dashboard consolidado. |
 | Reproduzir e rastrear um cálculo | Cada resultado tem execução, `rule_version`, regra, despesa e lote de origem. |
-| Testes automatizados | 119 no backend (pytest, inclusive integração com PostgreSQL) e 14 no frontend (Vitest), rodando no CI a cada PR. |
+| Testes automatizados | 133 no backend (pytest, inclusive integração com PostgreSQL) e 16 no frontend (Vitest), rodando no CI a cada PR. |
 
 ## Limitações
 
 - **Sem autenticação.** O MVP roda com um usuário de demonstração fixo. Os perfis da especificação ainda não existem. Veja [seguranca.md](seguranca.md).
 - **Granularidade mensal.** O cálculo trabalha por mês de competência; não há visão diária ou semanal.
-- **Um direcionador por regra.** Não há rateio em cascata (rateio de um processo para outro) nem por percentual fixo.
-- **Cadastros só por seed ou SQL.** Unidades, processos e contas ainda não têm tela de manutenção.
+- **Um direcionador por regra.** A cascata repassa processos de apoio por volume, mas ainda não há rateio por percentual fixo.
 - **Moeda única (BRL).**
 - **Sem integração com ERP, WMS ou TMS**, por escolha do escopo do MVP. A entrada é sempre um arquivo.
 
 ## Próximos passos
 
 1. Autenticação com perfis Administrador, Analista e Leitor.
-2. Telas de cadastro e regras de rateio em cascata.
-3. Publicação com Docker do backend e do frontend, HTTPS e backup.
+2. Publicação com Docker do backend e do frontend, HTTPS e backup.

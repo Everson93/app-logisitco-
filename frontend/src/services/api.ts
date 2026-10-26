@@ -1,6 +1,8 @@
 import type {
   AllocationRule,
   CalculationRun,
+  DimensionItem,
+  DimensionKind,
   Dimensions,
   FileType,
   ImportBatch,
@@ -113,6 +115,11 @@ export const api = {
   commit: (batchId: number) => request<ImportBatch>(`/imports/${batchId}/commit`, json("POST", {})),
   batches: (page = 1) => request<Page<ImportBatch>>(`/imports?page=${page}&page_size=10`),
 
+  dimensionItems: (kind: DimensionKind) => request<DimensionItem[]>(`/dimensions/${kind}`),
+  createDimension: (kind: DimensionKind, body: Record<string, unknown>) =>
+    request<DimensionItem>(`/dimensions/${kind}`, json("POST", body)),
+  updateDimension: (kind: DimensionKind, id: number, body: Record<string, unknown>) =>
+    request<DimensionItem>(`/dimensions/${kind}/${id}`, json("PATCH", body)),
   rules: () => request<AllocationRule[]>("/allocation-rules"),
   createRule: (body: {
     name: string;

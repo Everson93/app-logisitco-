@@ -74,7 +74,8 @@ flowchart TD
     R -->|sim, com volume| A[Rateio pelo direcionador<br/>centavos pelo maior resto]
     R -->|não ou volume zero| P[Pendência explícita]
     N -->|excluded / pending_classification| X[Só na composição]
-    D & A --> C[Custo total por unidade e processo]
+    D & A --> K[Cascata: processos de apoio<br/>repassados por direcionador]
+    K --> C[Custo total por unidade e processo]
     V[Atividades: volume do direcionador padrão] --> UC[Custo unitário]
     C --> UC
     O[Orçamento do mês] --> DV[Desvio R$ e %]

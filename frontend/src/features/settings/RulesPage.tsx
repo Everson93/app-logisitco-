@@ -11,6 +11,7 @@ const SCOPE_LABELS: Record<string, string> = {
   source_account_codes: "Despesas das contas",
   target_unit_codes: "Destinos: unidades",
   target_process_codes: "Destinos: processos",
+  source_process_codes: "Cascata: repassa o custo de",
 };
 
 export function RulesPage({ dimensions }: { dimensions: Dimensions | null }) {
@@ -21,9 +22,12 @@ export function RulesPage({ dimensions }: { dimensions: Dimensions | null }) {
     driver_code: "",
     valid_from: "2026-01-01",
     priority: 100,
+    kind: "expenses" as "expenses" | "cascade",
     source_unit: "",
+    source_process: "",
     target_process: "",
   });
+  const cascade = form.kind === "cascade";
 
   async function create(e: FormEvent) {
     e.preventDefault();
@@ -31,6 +35,7 @@ export function RulesPage({ dimensions }: { dimensions: Dimensions | null }) {
     try {
       const scope: Record<string, string[]> = {};
       if (form.source_unit) scope.source_unit_codes = [form.source_unit];
+      if (cascade) scope.source_process_codes = [form.source_process];
       if (form.target_process) scope.target_process_codes = [form.target_process];
       await api.createRule({
         name: form.name,
@@ -63,7 +68,9 @@ export function RulesPage({ dimensions }: { dimensions: Dimensions | null }) {
       </header>
       <p className="muted">
         Custos compartilhados só são rateados por uma regra explícita. Sem regra válida, eles ficam
-        pendentes no cálculo. Após alterar regras, execute o cálculo de novo no dashboard.
+        pendentes no cálculo. Regras de cascata rodam depois e repassam o custo total de um
+        processo de apoio (por exemplo, a administração do CD) aos processos de destino. Após
+        alterar regras, execute o cálculo de novo no dashboard.
       </p>
       {error && <ErrorBox error={error} />}
 
@@ -132,6 +139,35 @@ export function RulesPage({ dimensions }: { dimensions: Dimensions | null }) {
         <h2>Nova regra</h2>
         <div className="form-row">
           <label>
+            Tipo
+            <select
+              value={form.kind}
+              onChange={(e) =>
+                setForm({ ...form, kind: e.target.value as "expenses" | "cascade" })
+              }
+            >
+              <option value="expenses">Rateio de despesas compartilhadas</option>
+              <option value="cascade">Cascata: repassar processo de apoio</option>
+            </select>
+          </label>
+          {cascade && (
+            <label>
+              Processo de apoio
+              <select
+                required
+                value={form.source_process}
+                onChange={(e) => setForm({ ...form, source_process: e.target.value })}
+              >
+                <option value="">Escolha…</option>
+                {dimensions?.processes.map((p) => (
+                  <option key={p.code} value={p.code}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <label>
             Nome
             <input
               required
@@ -173,7 +209,7 @@ export function RulesPage({ dimensions }: { dimensions: Dimensions | null }) {
             />
           </label>
           <label>
-            Despesas da unidade
+            {cascade ? "Processo de apoio na unidade" : "Despesas da unidade"}
             <select
               value={form.source_unit}
               onChange={(e) => setForm({ ...form, source_unit: e.target.value })}
@@ -193,11 +229,13 @@ export function RulesPage({ dimensions }: { dimensions: Dimensions | null }) {
               onChange={(e) => setForm({ ...form, target_process: e.target.value })}
             >
               <option value="">Qualquer com volume</option>
-              {dimensions?.processes.map((p) => (
-                <option key={p.code} value={p.code}>
-                  {p.name}
-                </option>
-              ))}
+              {dimensions?.processes
+                .filter((p) => !cascade || p.code !== form.source_process)
+                .map((p) => (
+                  <option key={p.code} value={p.code}>
+                    {p.name}
+                  </option>
+                ))}
             </select>
           </label>
         </div>

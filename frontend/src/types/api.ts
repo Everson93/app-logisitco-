@@ -36,6 +36,23 @@ export interface Dimensions {
   cost_centers: { id: number; code: string; name: string }[];
 }
 
+export type DimensionKind = "units" | "processes" | "drivers" | "accounts" | "cost-centers";
+
+/** Linha de cadastro: campos comuns e os específicos de cada tipo. */
+export interface DimensionItem {
+  id: number;
+  code: string;
+  name: string;
+  active: boolean;
+  unit_type?: string;
+  unit_of_measure?: string;
+  default_driver_id?: number | null;
+  default_driver_code?: string | null;
+  cost_nature?: string | null;
+  unit_id?: number | null;
+  unit_code?: string | null;
+}
+
 export interface DashboardAlert {
   code: string;
   severity: "info" | "warning";
@@ -47,6 +64,7 @@ export interface Indicators {
   actual_cost: Decimal;
   direct_cost: Decimal;
   allocated_cost: Decimal;
+  transferred_cost: Decimal;
   budget_cost: Decimal | null;
   variance_amount: Decimal | null;
   variance_percent: Decimal | null;
@@ -58,7 +76,13 @@ export interface Indicators {
 export interface Summary extends Indicators {
   period: { from: string; to: string };
   currency: string;
-  composition: { direct: Decimal; allocated: Decimal; excluded: Decimal; pending: Decimal };
+  composition: {
+    direct: Decimal;
+    allocated: Decimal;
+    transferred: Decimal;
+    excluded: Decimal;
+    pending: Decimal;
+  };
   calculation_run_ids: number[];
   alerts: DashboardAlert[];
 }
@@ -183,6 +207,8 @@ export interface WarehouseIndicators {
   unit_cost: Decimal | null;
   direct_unit_cost: Decimal | null;
   allocated_unit_cost: Decimal | null;
+  transferred_cost: Decimal;
+  transferred_unit_cost: Decimal | null;
   productive_hours: Decimal | null;
   productivity_per_hour: Decimal | null;
   cost_per_hour: Decimal | null;

@@ -41,6 +41,7 @@ class Aggregate:
     actual: Decimal = ZERO
     direct: Decimal = ZERO
     allocated: Decimal = ZERO
+    transferred: Decimal = ZERO
     budget: Decimal | None = None
     driver_ids: set[int | None] = field(default_factory=set)
     uoms: set[str | None] = field(default_factory=set)
@@ -50,6 +51,7 @@ class Aggregate:
         self.actual += row.total_cost
         self.direct += row.direct_cost
         self.allocated += row.allocated_cost
+        self.transferred += row.transferred_cost
         if row.budget_amount is not None:
             self.budget = (self.budget or ZERO) + row.budget_amount
         self.driver_ids.add(row.driver_id)
@@ -68,6 +70,7 @@ class Aggregate:
             "actual_cost": round_money(self.actual),
             "direct_cost": round_money(self.direct),
             "allocated_cost": round_money(self.allocated),
+            "transferred_cost": round_money(self.transferred),
             "budget_cost": round_money(self.budget) if self.budget is not None else None,
             "variance_amount": round_money(variance.amount) if variance else None,
             "variance_percent": (
@@ -230,6 +233,7 @@ def summary(db: Session, filters: Filters) -> dict:
         "composition": {
             "direct": round_money(total.direct),
             "allocated": round_money(total.allocated),
+            "transferred": round_money(total.transferred),
             "excluded": round_money(excluded),
             "pending": round_money(pending_amount),
         },
@@ -390,6 +394,7 @@ REPORT_COLUMNS = [
     "moeda",
     "custo_direto",
     "custo_rateado",
+    "custo_repassado",
     "custo_total",
     "orcamento",
     "desvio",
@@ -433,6 +438,7 @@ def report_csv(db: Session, filters: Filters, *, brazilian: bool) -> str:
                 "BRL",
                 num(row.direct_cost),
                 num(row.allocated_cost),
+                num(row.transferred_cost),
                 num(row.total_cost),
                 num(row.budget_amount),
                 num(row.variance_amount),

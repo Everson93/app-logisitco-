@@ -5,6 +5,7 @@ from typing import Any
 from sqlalchemy import (
     BigInteger,
     Boolean,
+    CheckConstraint,
     Date,
     DateTime,
     ForeignKey,
@@ -28,6 +29,9 @@ class AllocationRule(Base):
     {"source_unit_codes": [...], "source_account_codes": [...],
      "target_unit_codes": [...], "target_process_codes": [...]}.
     Lista vazia ou ausente significa "qualquer".
+
+    Com `source_process_codes`, a regra é de cascata: em vez de despesas compartilhadas,
+    repassa o custo total desses processos (de apoio) aos processos de destino.
     """
 
     __tablename__ = "allocation_rules"
@@ -78,6 +82,8 @@ class CostResult(Base):
     process_id: Mapped[int | None] = mapped_column(ForeignKey("processes.id"))
     direct_cost: Mapped[Decimal] = mapped_column(Numeric(14, 2))
     allocated_cost: Mapped[Decimal] = mapped_column(Numeric(14, 2))
+    # Rateio em cascata: positivo no destino, negativo no processo de apoio que repassou.
+    transferred_cost: Mapped[Decimal] = mapped_column(Numeric(14, 2), server_default="0")
     total_cost: Mapped[Decimal] = mapped_column(Numeric(14, 2))
     driver_id: Mapped[int | None] = mapped_column(ForeignKey("drivers.id"))
     driver_quantity: Mapped[Decimal | None] = mapped_column(Numeric(16, 4))
@@ -90,15 +96,24 @@ class CostResult(Base):
 
 
 class AllocationResult(Base):
-    """Detalhe do rateio: de qual despesa, por qual regra, para qual destino."""
+    """Detalhe do rateio: de qual despesa (ou, na cascata, de qual processo de apoio), por qual
+    regra, para qual destino."""
 
     __tablename__ = "allocation_results"
+    __table_args__ = (
+        CheckConstraint(
+            "(expense_id IS NOT NULL) <> (source_process_id IS NOT NULL)",
+            name="ck_allocation_results_origin",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     calculation_run_id: Mapped[int] = mapped_column(
         ForeignKey("calculation_runs.id", ondelete="CASCADE"), index=True
     )
-    expense_id: Mapped[int] = mapped_column(ForeignKey("expenses.id"), index=True)
+    expense_id: Mapped[int | None] = mapped_column(ForeignKey("expenses.id"), index=True)
+    source_unit_id: Mapped[int | None] = mapped_column(ForeignKey("units.id"))
+    source_process_id: Mapped[int | None] = mapped_column(ForeignKey("processes.id"))
     rule_id: Mapped[int] = mapped_column(ForeignKey("allocation_rules.id"))
     target_unit_id: Mapped[int] = mapped_column(ForeignKey("units.id"))
     target_process_id: Mapped[int] = mapped_column(ForeignKey("processes.id"))

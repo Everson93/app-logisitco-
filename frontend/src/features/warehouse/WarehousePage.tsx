@@ -130,6 +130,7 @@ function ProcessTable({ items }: { items: WarehouseProcess[] }) {
             <th className="num">Custo unitário</th>
             <th className="num">Direto</th>
             <th className="num">Rateado</th>
+            <th className="num">Cascata</th>
             <th className="num">Horas</th>
             <th className="num">Produtividade</th>
             <th className="num">Custo / hora</th>
@@ -145,6 +146,7 @@ function ProcessTable({ items }: { items: WarehouseProcess[] }) {
               <td className="num nowrap">{unitCost(i.unit_cost, i.driver_uom)}</td>
               <td className="num">{unitCost(i.direct_unit_cost)}</td>
               <td className="num">{unitCost(i.allocated_unit_cost)}</td>
+              <td className="num">{unitCost(i.transferred_unit_cost)}</td>
               <td className="num">{quantity(i.productive_hours)}</td>
               <td className="num nowrap">{perHour(i.productivity_per_hour, i.driver_uom)}</td>
               <td className="num">{money(i.cost_per_hour)}</td>

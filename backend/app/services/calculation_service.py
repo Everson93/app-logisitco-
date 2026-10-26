@@ -96,6 +96,7 @@ def load_rules(db: Session) -> tuple[list[RuleSpec], list[dict[str, Any]]]:
                 source_account_ids=_ids_by_code(db, Account, scope.get("source_account_codes")),
                 target_unit_ids=_ids_by_code(db, Unit, scope.get("target_unit_codes")),
                 target_process_ids=_ids_by_code(db, Process, scope.get("target_process_codes")),
+                source_process_ids=_ids_by_code(db, Process, scope.get("source_process_codes")),
             )
         )
         snapshot.append(
@@ -207,6 +208,7 @@ def run_calculation(
                 process_id=r.process_id,
                 direct_cost=r.direct_cost,
                 allocated_cost=r.allocated_cost,
+                transferred_cost=r.transferred_cost,
                 total_cost=r.total_cost,
                 driver_id=r.driver_id,
                 driver_quantity=r.driver_quantity,
@@ -223,6 +225,8 @@ def run_calculation(
             AllocationResult(
                 calculation_run_id=run.id,
                 expense_id=a.expense_id,
+                source_unit_id=a.source[0] if a.source else None,
+                source_process_id=a.source[1] if a.source else None,
                 rule_id=a.rule_id,
                 target_unit_id=a.target[0],
                 target_process_id=a.target[1],
@@ -252,6 +256,7 @@ def run_calculation(
         "months": len(months),
         "direct": str(round_money(totals["direct"])),
         "allocated": str(round_money(totals["allocated"])),
+        "transferred": str(round_money(totals["transferred"])),
         "excluded": str(round_money(totals["excluded"])),
         "pending": str(round_money(totals["pending"])),
         "issues": issues_count,
@@ -336,7 +341,7 @@ def run_allocations(db: Session, run_id: int) -> list[AllocationResult]:
         db.scalars(
             select(AllocationResult)
             .where(AllocationResult.calculation_run_id == run_id)
-            .order_by(AllocationResult.expense_id, AllocationResult.id)
+            .order_by(AllocationResult.id)
         )
     )
 

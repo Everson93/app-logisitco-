@@ -12,6 +12,8 @@ const pick: WarehouseIndicators = {
   unit_cost: "10.0000",
   direct_unit_cost: "10.0000",
   allocated_unit_cost: "0.0000",
+  transferred_cost: "2500.00",
+  transferred_unit_cost: "0.5000",
   productive_hours: "1000.0000",
   productivity_per_hour: "5.00",
   cost_per_hour: "50.00",
@@ -90,4 +92,6 @@ test("mostra produtividade do picking e N/D onde não há horas", async () => {
   expect(within(arm).getAllByText("N/D").length).toBeGreaterThanOrEqual(3);
   expect(screen.getByText(/Sem horas produtivas para ARM/)).toBeInTheDocument();
   expect(screen.getByText("5 pedidos / h")).toBeInTheDocument();
+  const pickRow = screen.getByRole("row", { name: /PICK · Separação/ });
+  expect(within(pickRow).getByText(/R\$\s0,50$/)).toBeInTheDocument();
 });

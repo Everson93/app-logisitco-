@@ -141,6 +141,12 @@ export function DashboardPage({ dimensions }: { dimensions: Dimensions | null })
                     <th scope="row">Custos rateados</th>
                     <td className="num">{money(s.composition.allocated)}</td>
                   </tr>
+                  {toNumber(s.composition.transferred) ? (
+                    <tr>
+                      <th scope="row">Repassado em cascata (saldo no recorte)</th>
+                      <td className="num">{signedMoney(s.composition.transferred)}</td>
+                    </tr>
+                  ) : null}
                   <tr>
                     <th scope="row">Excluídos (fora do custo)</th>
                     <td className="num">{money(s.composition.excluded)}</td>
@@ -185,6 +191,7 @@ function ProcessTable({ items }: { items: ProcessItem[] }) {
           <tr>
             <th>Processo</th>
             <th className="num">Realizado</th>
+            <th className="num">Cascata</th>
             <th className="num">Orçamento</th>
             <th className="num">Desvio</th>
             <th className="num">Desvio %</th>
@@ -197,6 +204,9 @@ function ProcessTable({ items }: { items: ProcessItem[] }) {
             <tr key={i.process_id ?? "none"}>
               <td>{i.process_name}</td>
               <td className="num">{money(i.actual_cost)}</td>
+              <td className="num">
+                {toNumber(i.transferred_cost) ? signedMoney(i.transferred_cost) : "—"}
+              </td>
               <td className="num">{money(i.budget_cost)}</td>
               <td className="num">{signedMoney(i.variance_amount)}</td>
               <td className="num">{signedPercent(i.variance_percent)}</td>

@@ -162,6 +162,7 @@ def test_excluidas_e_sem_classificacao_entram_na_composicao():
     assert result.composition == {
         "direct": D(100),
         "allocated": D(0),
+        "transferred": D(0),
         "excluded": D(30),
         "pending": D(20),
     }
@@ -198,4 +199,94 @@ def test_versao_da_regra_e_deterministica():
     a = [{"id": 2, "priority": 1}, {"id": 1, "priority": 5}]
     assert rule_version(a) == rule_version(list(reversed(a)))
     assert rule_version(a) != rule_version([{"id": 1, "priority": 6}, {"id": 2, "priority": 1}])
-    assert rule_version([]).startswith("calc-v1:")
+    assert rule_version([]).startswith("calc-v2:")
+
+
+# Rateio em cascata: ADM e MAN são processos de apoio, sem direcionador padrão.
+ADM, MAN = 12, 14
+HOUR = 102
+
+
+def test_cascata_repassa_o_processo_de_apoio_por_horas():
+    result = calculate_month(
+        SEP,
+        [
+            expense(1, "1000", process=ADM),
+            expense(2, "5000", process=REC),
+            expense(3, "3000", process=PICK),
+            expense(4, "600", nature="shared", process=None),
+        ],
+        [
+            activity(CD, REC, PALLET, "1000"),
+            activity(CD, PICK, ORDER, "500"),
+            activity(CD, REC, HOUR, "100"),
+            activity(CD, PICK, HOUR, "300"),
+        ],
+        {},
+        [rule(1, PALLET), rule(2, HOUR, source_process_ids=frozenset({ADM}))],
+        DEFAULT_DRIVERS,
+    )
+    rows = by_target(result)
+    adm, rec, pick = rows[(CD, ADM)], rows[(CD, REC)], rows[(CD, PICK)]
+    assert (adm.direct_cost, adm.transferred_cost, adm.total_cost) == (D(1000), D(-1000), D(0))
+    assert adm.alerts == []  # sem NO_DRIVER nem MISSING_BUDGET: repassou tudo
+    # O rateio das despesas vem antes; a cascata soma por cima.
+    assert (rec.allocated_cost, rec.transferred_cost, rec.total_cost) == (D(600), D(250), D(5850))
+    assert rec.unit_cost == D("5.85")
+    assert (pick.transferred_cost, pick.total_cost) == (D(750), D(3750))
+    assert result.composition["transferred"] == D(1000)
+
+    transfers = [a for a in result.allocations if a.expense_id is None]
+    assert {(a.source, a.target, a.amount) for a in transfers} == {
+        ((CD, ADM), (CD, REC), D(250)),
+        ((CD, ADM), (CD, PICK), D(750)),
+    }
+    assert sum(r.total_cost for r in result.rows) == D(9600)
+
+
+def test_cascata_em_degraus_nao_volta_para_quem_ja_repassou():
+    result = calculate_month(
+        SEP,
+        [expense(1, "1000", process=ADM), expense(2, "500", process=MAN)],
+        [
+            activity(CD, ADM, HOUR, "999"),  # ignorado: ADM já repassou
+            activity(CD, MAN, HOUR, "100"),
+            activity(CD, REC, HOUR, "100"),
+            activity(CD, PICK, HOUR, "200"),
+        ],
+        {},
+        [
+            rule(1, HOUR, priority=10, source_process_ids=frozenset({ADM})),
+            rule(2, HOUR, priority=20, source_process_ids=frozenset({MAN})),
+        ],
+        DEFAULT_DRIVERS,
+    )
+    rows = by_target(result)
+    # ADM: 1000 por 100/100/200 h -> MAN 250, REC 250, PICK 500.
+    # MAN: 500 + 250 = 750 por 100/200 h -> REC 250, PICK 500.
+    assert rows[(CD, ADM)].total_cost == D(0)
+    assert rows[(CD, MAN)].total_cost == D(0)
+    assert rows[(CD, REC)].transferred_cost == D(500)
+    assert rows[(CD, PICK)].transferred_cost == D(1000)
+    assert result.composition["transferred"] == D(1750)
+
+
+def test_cascata_sem_volume_mantem_custo_na_origem():
+    result = calculate_month(
+        SEP,
+        [expense(1, "1000", process=ADM)],
+        [activity(CD, REC, PALLET, "10")],
+        {},
+        [rule(2, HOUR, source_process_ids=frozenset({ADM}))],
+        DEFAULT_DRIVERS,
+    )
+    adm = by_target(result)[(CD, ADM)]
+    assert adm.total_cost == D(1000)
+    assert RowAlert.NO_DRIVER in adm.alerts
+    assert [i.code for i in result.issues] == [IssueCode.CASCADE_NOT_TRANSFERRED]
+    assert result.composition["pending"] == D(0)
+
+
+def test_regra_de_cascata_nao_rateia_despesa_compartilhada():
+    cascade = rule(2, HOUR, source_process_ids=frozenset({ADM}))
+    assert pick_rule(expense(1, "100", nature="shared", process=None), [cascade]) is None
