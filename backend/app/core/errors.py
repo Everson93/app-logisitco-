@@ -1,10 +1,13 @@
 """Erros de aplicação no formato padrão da API (seção 9)."""
 
+import logging
 from typing import Any
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+
+logger = logging.getLogger("app.errors")
 
 
 class AppError(Exception):
@@ -42,4 +45,13 @@ def register_error_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=422,
             content=error_body("INVALID_REQUEST", "A requisição tem campos inválidos.", details),
+        )
+
+    @app.exception_handler(Exception)
+    async def handle_unexpected(request: Request, exc: Exception) -> JSONResponse:
+        # O detalhe vai só para o log do servidor; o usuário não vê stack trace (seção 13).
+        logger.exception("Erro inesperado em %s %s", request.method, request.url.path)
+        return JSONResponse(
+            status_code=500,
+            content=error_body("INTERNAL_ERROR", "Erro interno. Tente novamente mais tarde."),
         )

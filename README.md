@@ -4,7 +4,31 @@ Aplicação web que consolida despesas e volumes operacionais, padroniza os dado
 
 > Projeto de portfólio. Usa apenas **dados fictícios** e não é um sistema financeiro certificado nem substitui controles oficiais.
 
-A especificação completa está em [`docs/especificacao.md`](docs/especificacao.md).
+![Dashboard com indicadores, tendência mensal e custo por processo](docs/img/dashboard.png)
+
+## O problema
+
+O custo de cada processo logístico (recebimento, armazenagem, picking, expedição e transporte) costuma ser montado à mão em planilhas. Despesas, volumes e orçamento chegam de fontes diferentes, com formatos de data e número diferentes, códigos que não batem, linhas repetidas e custos compartilhados sem critério de rateio. O número final é lento de produzir e difícil de explicar.
+
+## A solução
+
+- **Importação guiada** de CSV e XLSX: prévia, mapeamento de colunas, validação linha a linha e confirmação em transação. Reimportar o mesmo arquivo não duplica nada.
+- **Motor de cálculo** com `Decimal`: custo direto, rateio de custos compartilhados por direcionador (centavos fechados pelo maior resto), custo unitário e desvio contra o orçamento.
+- **Dashboard** com filtros por período, unidade e processo, e exportação CSV do mesmo recorte.
+- **Rastreabilidade**: cada resultado aponta para a execução de cálculo, a regra de rateio e o lote de origem. Ações críticas ficam em log de auditoria.
+
+![Central de importação com erros por linha e coluna](docs/img/importacao.png)
+
+## Documentação
+
+| Documento | Conteúdo |
+| --- | --- |
+| [Estudo de caso](docs/estudo-de-caso.md) | Decisões, resultados com os dados de demonstração, limitações e próximos passos. |
+| [Arquitetura](docs/arquitetura.md) | Diagramas de componentes, fluxos de importação e cálculo, e modelo entidade-relacionamento. |
+| [Dicionário de dados](docs/dicionario-de-dados.md) | Layout dos arquivos de importação, tabelas e códigos de erro e alerta. |
+| [Segurança](docs/seguranca.md) | Checklist da seção 13 e o que falta antes de publicar. |
+| [Roteiro do vídeo](docs/roteiro-demo.md) | Demonstração de 2 a 4 minutos. |
+| [Especificação](docs/especificacao.md) | Documento original do projeto. |
 
 ## Status
 
@@ -14,6 +38,7 @@ A especificação completa está em [`docs/especificacao.md`](docs/especificacao
 | 1 — dados | Importação CSV/XLSX, validação, histórico e normalização | ✅ concluída |
 | 2 — cálculo | Regras de rateio, execuções de cálculo, orçamento | ✅ concluída |
 | 3 — visualização | Dashboard, filtros e relatório CSV | ✅ concluída |
+| Documentação | README, diagramas, dicionário de dados, segurança e estudo de caso | ✅ concluída |
 | 4 — expansão | Transporte, armazenagem, picking e cenários | pendente |
 
 ## Stack
@@ -34,7 +59,7 @@ backend/
     services/      regras de negócio (calculations.py = motor de cálculo)
   alembic/         migrations
   tests/
-docs/              especificação
+docs/              especificação, arquitetura, dicionário de dados e estudo de caso
 sample-data/       CSVs fictícios (válidos e casos inválidos)
 scripts/           geração e carga dos dados de demonstração
 frontend/
@@ -132,7 +157,7 @@ Como o cálculo funciona, mês a mês de competência:
 4. **Custo unitário** usa o direcionador padrão do processo e fica N/D (com alerta) quando não há volume.
 5. **Orçamento** do mesmo mês, unidade e processo gera o desvio absoluto e o percentual, que fica sem percentual quando o orçamento é zero.
 
-Cada execução guarda a `rule_version`, um hash das regras ativas. Recalcular cria uma nova execução e marca as anteriores do mesmo período como `superseded`, sem apagar nada. Importações confirmadas, alterações de regra e execuções de cálculo ficam registradas em `audit_logs`.
+Cada execução guarda a `rule_version`, um hash das regras ativas. Recalcular cria uma nova execução sem apagar nada. Uma execução anterior só vira `superseded` quando a nova cobre todos os meses dela. Importações confirmadas, alterações de regra e execuções de cálculo ficam registradas em `audit_logs`.
 
 O seed cria uma regra de demonstração: os custos compartilhados do CD são rateados por paletes recebidos.
 
