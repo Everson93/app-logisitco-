@@ -26,6 +26,7 @@ from app.db.session import SessionLocal  # noqa: E402
 from app.models import (  # noqa: E402
     Account,
     Activity,
+    AllocationRule,
     Budget,
     Driver,
     Expense,
@@ -97,6 +98,15 @@ def new_batch(db: Session, filename: str, file_type: str, sha: str, total: int) 
     db.add(batch)
     db.flush()
     return batch.id
+
+
+DEMO_RULE = {
+    "name": "Demo: custos compartilhados do CD por paletes recebidos",
+    "driver": "pallet_received",
+    "valid_from": date(2026, 1, 1),
+    "scope": {"source_unit_codes": ["CD-DEMO-01"]},
+    "priority": 100,
+}
 
 
 def rows_to_load(rows: list[dict], batch_id: int | None) -> list[dict]:
@@ -185,9 +195,22 @@ def main() -> None:
             )
             inserted_budgets += 1
 
+        rule_created = False
+        if db.scalar(select(AllocationRule.id).filter_by(name=DEMO_RULE["name"])) is None:
+            db.add(
+                AllocationRule(
+                    name=DEMO_RULE["name"],
+                    driver_id=drivers[DEMO_RULE["driver"]],
+                    valid_from=DEMO_RULE["valid_from"],
+                    scope=DEMO_RULE["scope"],
+                    priority=DEMO_RULE["priority"],
+                )
+            )
+            rule_created = True
+
     print(
         f"Seed concluído: {inserted_expenses} despesas, {inserted_activities} atividades, "
-        f"{inserted_budgets} linhas de orçamento inseridas."
+        f"{inserted_budgets} linhas de orçamento e {int(rule_created)} regra de rateio inseridas."
     )
 
 

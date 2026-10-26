@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.core.errors import AppError
 from app.models import Activity, Budget, Expense, ImportBatch, ImportRowError, ImportStagingRow
 from app.repositories.dimensions import load_dimensions
+from app.services import audit
 from app.services.imports.fields import FIELDS, FileType, suggest_mapping
 from app.services.imports.normalize import DateFormat, DecimalSeparator
 from app.services.imports.parsing import FileRejected, ParsedRow, parse_file
@@ -273,6 +274,19 @@ def commit(db: Session, batch_id: int) -> ImportBatch:
         batch.rows_ignored = batch.rows_valid - inserted
         batch.status = "committed"
         batch.committed_at = datetime.now(UTC)
+        audit.record(
+            db,
+            actor=batch.uploaded_by,
+            action="import.commit",
+            entity_type="import_batch",
+            entity_id=batch.id,
+            details={
+                "file_type": batch.file_type,
+                "rows_committed": batch.rows_committed,
+                "rows_ignored": batch.rows_ignored,
+                "rows_rejected": batch.rows_rejected,
+            },
+        )
         db.commit()
     except Exception:
         db.rollback()

@@ -12,7 +12,7 @@ A especificação completa está em [`docs/especificacao.md`](docs/especificacao
 | --- | --- | --- |
 | 0 — fundação | Repositório, ambiente local, banco, modelo de dados, motor de cálculo e dados sintéticos | ✅ concluída |
 | 1 — dados | Importação CSV/XLSX, validação, histórico e normalização | ✅ concluída |
-| 2 — cálculo | Regras de rateio, execuções de cálculo, orçamento | pendente |
+| 2 — cálculo | Regras de rateio, execuções de cálculo, orçamento | ✅ concluída |
 | 3 — visualização | Dashboard, filtros e relatório CSV | pendente |
 | 4 — expansão | Transporte, armazenagem, picking e cenários | pendente |
 
@@ -95,6 +95,30 @@ Regras principais:
 - **Códigos de erro:** `MISSING_REQUIRED_FIELD`, `INVALID_DATE`, `INVALID_NUMBER`, `INVALID_NATURE`, `INVALID_PERIOD`, `UNKNOWN_UNIT`, `UNKNOWN_PROCESS`, `UNKNOWN_ACCOUNT`, `UNKNOWN_COST_CENTER`, `UNKNOWN_DRIVER`, `UNIT_OF_MEASURE_MISMATCH`, `NEGATIVE_QUANTITY`, `DUPLICATE_SOURCE_KEY`. Os avisos são `ZERO_QUANTITY`, `ZERO_BUDGET` e `ALREADY_IMPORTED`.
 - **XLSX:** datas e números que o Excel já guarda como tal são lidos diretamente, sem depender da convenção escolhida. Células digitadas como texto, como `1.234,56`, seguem a convenção. Fórmulas entram pelo último valor calculado e nada é executado. Arquivos com macros (`.xlsm` ou `vbaProject.bin`) são recusados.
 - **Limites:** `.csv` (UTF-8 ou Windows-1252, separado por `,`, `;` ou tab) ou `.xlsx` (até 20 abas), com até 5 MB e 50.000 linhas.
+
+## Cálculo de custos (API)
+
+| Rota | O que faz |
+| --- | --- |
+| `GET/POST /api/v1/allocation-rules` | Lista e cria regras de rateio. |
+| `GET/PATCH /api/v1/allocation-rules/{id}` | Consulta, altera ou desativa (`{"active": false}`) uma regra. |
+| `POST /api/v1/calculations/run` | Executa o cálculo de `period_start` (dia 1) a `period_end` (último dia do mês). |
+| `GET /api/v1/calculations` | Histórico de execuções. |
+| `GET /api/v1/calculations/{id}/results` | Custo direto, rateado, total, volume, custo unitário, orçamento e desvio por mês, unidade e processo. |
+| `GET /api/v1/calculations/{id}/allocations` | Detalhe do rateio: despesa de origem, regra, destino, volume e valor. |
+| `GET /api/v1/calculations/{id}/issues` | Pendências, como custo compartilhado sem regra ou sem volume. |
+
+Como o cálculo funciona, mês a mês de competência:
+
+1. **Despesas diretas** somam no par unidade/processo informado.
+2. **Despesas compartilhadas** usam a regra ativa, vigente e cujo escopo cubra a despesa. Vence a regra de menor `priority` e, no empate, a de menor id. O valor é distribuído pelo volume do direcionador da regra entre os destinos elegíveis (`target_unit_codes` e `target_process_codes`; lista vazia significa todos). Os centavos fecham pelo maior resto. Sem regra ou sem volume, nada é rateado: a despesa vira pendência.
+3. **Excluídas** e **sem classificação** não entram no custo, mas aparecem na composição (`summary`).
+4. **Custo unitário** usa o direcionador padrão do processo e fica N/D (com alerta) quando não há volume.
+5. **Orçamento** do mesmo mês, unidade e processo gera o desvio absoluto e o percentual, que fica sem percentual quando o orçamento é zero.
+
+Cada execução guarda a `rule_version`, um hash das regras ativas. Recalcular cria uma nova execução e marca as anteriores do mesmo período como `superseded`, sem apagar nada. Importações confirmadas, alterações de regra e execuções de cálculo ficam registradas em `audit_logs`.
+
+O seed cria uma regra de demonstração: os custos compartilhados do CD são rateados por paletes recebidos.
 
 ## Testes
 
