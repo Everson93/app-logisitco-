@@ -55,6 +55,7 @@ const UOM: Record<string, [string, string]> = {
   position_day: ["posições-dia", "posição-dia"],
   order: ["pedidos", "pedido"],
   trip: ["viagens", "viagem"],
+  km: ["km", "km"],
 };
 
 export function uomLabel(uom: string, singular = false): string {
@@ -96,4 +97,9 @@ export function monthsBetween(from: string, to: string): string[] {
   const months: string[] = [];
   for (let m = from; m <= to && months.length < 120; m = addMonths(m, 1)) months.push(m);
   return months;
+}
+
+export function percent(value: Numeric): string {
+  const n = toNumber(value);
+  return n === null ? ND : `${number.format(n)}%`;
 }

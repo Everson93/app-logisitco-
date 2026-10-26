@@ -1,0 +1,10 @@
+activity_date,unit_code,process_code,driver_code,quantity,unit_of_measure,source_key
+2026-07-31,CD-DEMO-01,TRANS,km,14760,km,TMS-DEMO-01-km
+2026-07-31,CD-DEMO-01,TRANS,pallet_transported,3960,pallet,TMS-DEMO-01-pallet_transported
+2026-07-31,CD-DEMO-01,TRANS,pallet_capacity,5040,pallet,TMS-DEMO-01-pallet_capacity
+2026-08-31,CD-DEMO-01,TRANS,km,16150,km,TMS-DEMO-02-km
+2026-08-31,CD-DEMO-01,TRANS,pallet_transported,4370,pallet,TMS-DEMO-02-pallet_transported
+2026-08-31,CD-DEMO-01,TRANS,pallet_capacity,5320,pallet,TMS-DEMO-02-pallet_capacity
+2026-09-30,CD-DEMO-01,TRANS,km,17248,km,TMS-DEMO-03-km
+2026-09-30,CD-DEMO-01,TRANS,pallet_transported,4704,pallet,TMS-DEMO-03-pallet_transported
+2026-09-30,CD-DEMO-01,TRANS,pallet_capacity,5488,pallet,TMS-DEMO-03-pallet_capacity

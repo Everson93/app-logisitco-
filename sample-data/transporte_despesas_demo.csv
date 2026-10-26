@@ -1,0 +1,7 @@
+competence_date,unit_code,process_code,account_code,description,amount,nature,source_key
+2026-07-31,CD-DEMO-01,TRANS,6106,Combustivel frota propria,18450.00,direct,FROTA-DEMO-01-6106
+2026-07-31,CD-DEMO-01,TRANS,6107,Manutencao frota propria,4200.00,direct,FROTA-DEMO-01-6107
+2026-08-31,CD-DEMO-01,TRANS,6106,Combustivel frota propria,20672.00,direct,FROTA-DEMO-02-6106
+2026-08-31,CD-DEMO-01,TRANS,6107,Manutencao frota propria,4350.00,direct,FROTA-DEMO-02-6107
+2026-09-30,CD-DEMO-01,TRANS,6106,Combustivel frota propria,22422.40,direct,FROTA-DEMO-03-6106
+2026-09-30,CD-DEMO-01,TRANS,6107,Manutencao frota propria,6900.00,direct,FROTA-DEMO-03-6107

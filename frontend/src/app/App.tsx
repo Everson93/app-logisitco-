@@ -6,12 +6,14 @@ import { DashboardPage } from "../features/dashboard/DashboardPage";
 import { ImportsPage } from "../features/imports/ImportsPage";
 import { ScenariosPage } from "../features/scenarios/ScenariosPage";
 import { RulesPage } from "../features/settings/RulesPage";
+import { TransportPage } from "../features/transport/TransportPage";
 import { api } from "../services/api";
 
-type Tab = "dashboard" | "scenarios" | "imports" | "rules";
+type Tab = "dashboard" | "transport" | "scenarios" | "imports" | "rules";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "dashboard", label: "Dashboard" },
+  { id: "transport", label: "Transporte" },
   { id: "scenarios", label: "Cenários" },
   { id: "imports", label: "Importações" },
   { id: "rules", label: "Regras de rateio" },
@@ -46,6 +48,7 @@ export function App() {
       <main>
         {dimensions.error && <ErrorBox error={dimensions.error} onRetry={dimensions.reload} />}
         {tab === "dashboard" && <DashboardPage dimensions={dimensions.data} />}
+        {tab === "transport" && <TransportPage dimensions={dimensions.data} />}
         {tab === "scenarios" && <ScenariosPage dimensions={dimensions.data} />}
         {tab === "imports" && <ImportsPage />}
         {tab === "rules" && <RulesPage dimensions={dimensions.data} />}

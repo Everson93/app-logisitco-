@@ -11,6 +11,7 @@ import type {
   ScenarioResult,
   Summary,
   TrendPoint,
+  Transport,
   Validation,
   Variance,
 } from "../types/api";
@@ -77,6 +78,8 @@ export const api = {
     request<Variance>(
       `/dashboard/variance?${filterQuery(f, { base_from: baseFrom, base_to: baseTo })}`,
     ),
+  transport: (f: DashboardFilters) =>
+    request<Transport>(`/dashboard/transport?${filterQuery(f)}`),
   reportUrl: (f: DashboardFilters) => `${BASE}/reports/costs.csv?${filterQuery(f)}`,
 
   runCalculation: (periodStart: string, periodEnd: string) =>
