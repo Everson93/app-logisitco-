@@ -13,13 +13,13 @@ A especificação completa está em [`docs/especificacao.md`](docs/especificacao
 | 0 — fundação | Repositório, ambiente local, banco, modelo de dados, motor de cálculo e dados sintéticos | ✅ concluída |
 | 1 — dados | Importação CSV/XLSX, validação, histórico e normalização | ✅ concluída |
 | 2 — cálculo | Regras de rateio, execuções de cálculo, orçamento | ✅ concluída |
-| 3 — visualização | Dashboard, filtros e relatório CSV | pendente |
+| 3 — visualização | Dashboard, filtros e relatório CSV | ✅ concluída |
 | 4 — expansão | Transporte, armazenagem, picking e cenários | pendente |
 
 ## Stack
 
 - **Backend:** Python 3.12, FastAPI, SQLAlchemy 2, Alembic, PostgreSQL 16
-- **Frontend (Fase 3):** React + TypeScript + Vite (Node 22)
+- **Frontend:** React 19 + TypeScript + Vite, Recharts (Node 22)
 - **Ambiente:** Docker Compose · **Testes:** pytest · **Lint:** ruff
 
 ## Estrutura
@@ -37,7 +37,14 @@ backend/
 docs/              especificação
 sample-data/       CSVs fictícios (válidos e casos inválidos)
 scripts/           geração e carga dos dados de demonstração
-frontend/          (Fase 3)
+frontend/
+  src/
+    app/           shell e navegação
+    components/    cartões, alertas, estados de carregamento/erro
+    features/      dashboard, imports (central de importação), settings (regras)
+    services/      cliente HTTP e formatação pt-BR
+    types/         contratos da API
+  tests/           vitest + Testing Library
 ```
 
 ## Como rodar localmente
@@ -61,6 +68,15 @@ uvicorn app.main:app --reload
 ```
 
 Verifique em <http://localhost:8000/api/v1/health> (`{"status": "ok"}`) e veja a documentação interativa em <http://localhost:8000/docs>.
+
+```bash
+# 4. Frontend (em outro terminal)
+cd frontend
+npm install
+npm run dev          # http://localhost:5173 — /api é encaminhado para o backend
+```
+
+No dashboard, escolha o período e clique em **Executar cálculo do período**. Com os dados de demonstração, use julho a setembro de 2026, que já é o padrão em outubro de 2026.
 
 ## Importação de dados (API)
 
@@ -120,6 +136,19 @@ Cada execução guarda a `rule_version`, um hash das regras ativas. Recalcular c
 
 O seed cria uma regra de demonstração: os custos compartilhados do CD são rateados por paletes recebidos.
 
+## Dashboard e relatório (API)
+
+Todas as rotas recebem `from` e `to` (datas) e, opcionalmente, `unit_id` e `process_id`. Em cada mês vale a execução de cálculo mais recente que o cobre. O frontend não calcula indicadores, só exibe o que a API devolve.
+
+| Rota | O que faz |
+| --- | --- |
+| `GET /api/v1/dashboard/summary` | Realizado, orçamento, desvio R$ e %, custo unitário, volume, composição (diretos, rateados, excluídos, pendentes) e alertas. |
+| `GET /api/v1/dashboard/trend` | Série mensal. Meses sem cálculo vêm com `calculated: false`. |
+| `GET /api/v1/dashboard/by-process` | Indicadores por processo. |
+| `GET /api/v1/reports/costs.csv` | CSV do recorte filtrado, com período, unidade, processo e moeda. Por padrão sai em formato brasileiro (`;` e vírgula decimal, UTF-8 com BOM para o Excel). Use `format=intl` para `,` e ponto decimal. |
+
+O custo unitário só é calculado quando o recorte tem **um único direcionador**. Com mais de um, a API devolve N/D e o alerta `MIXED_DRIVERS`, porque custo por palete e custo por pedido não se somam (seção 5.4). Valores monetários chegam como texto decimal para não perder precisão.
+
 ## Testes
 
 ```bash
@@ -127,6 +156,9 @@ cd backend
 pytest                                   # testes unitários
 TEST_DATABASE_URL=postgresql+psycopg://logicost:SENHA@localhost:5432/logicost_test pytest
 ruff check . ../scripts && ruff format --check . ../scripts
+
+cd ../frontend
+npm run typecheck && npm test && npm run build
 ```
 
 Os testes de integração da importação só rodam com `TEST_DATABASE_URL`, que deve apontar para um banco **descartável**, porque as tabelas são limpas a cada teste.
