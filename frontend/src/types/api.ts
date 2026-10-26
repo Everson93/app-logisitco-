@@ -64,6 +64,7 @@ export interface Indicators {
   actual_cost: Decimal;
   direct_cost: Decimal;
   allocated_cost: Decimal;
+  transferred_cost: Decimal;
   budget_cost: Decimal | null;
   variance_amount: Decimal | null;
   variance_percent: Decimal | null;
@@ -75,7 +76,13 @@ export interface Indicators {
 export interface Summary extends Indicators {
   period: { from: string; to: string };
   currency: string;
-  composition: { direct: Decimal; allocated: Decimal; excluded: Decimal; pending: Decimal };
+  composition: {
+    direct: Decimal;
+    allocated: Decimal;
+    transferred: Decimal;
+    excluded: Decimal;
+    pending: Decimal;
+  };
   calculation_run_ids: number[];
   alerts: DashboardAlert[];
 }
@@ -200,6 +207,8 @@ export interface WarehouseIndicators {
   unit_cost: Decimal | null;
   direct_unit_cost: Decimal | null;
   allocated_unit_cost: Decimal | null;
+  transferred_cost: Decimal;
+  transferred_unit_cost: Decimal | null;
   productive_hours: Decimal | null;
   productivity_per_hour: Decimal | null;
   cost_per_hour: Decimal | null;

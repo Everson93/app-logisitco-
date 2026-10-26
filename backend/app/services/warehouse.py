@@ -2,7 +2,7 @@
 
 Para cada processo do armazém (REC, ARM, PICK, EXP):
 
-- custo unitário pelo direcionador padrão, separado em direto e rateado;
+- custo unitário pelo direcionador padrão, separado em direto, rateado e repassado em cascata;
 - produtividade: volume do direcionador padrão por hora produtiva (`productive_hour`);
 - no picking, linhas separadas (`line_picked`) por hora e por pedido.
 
@@ -44,6 +44,7 @@ class Cell:
     total: Decimal = ZERO
     direct: Decimal = ZERO
     allocated: Decimal = ZERO
+    transferred: Decimal = ZERO
     volume: Decimal | None = None
     uom: str | None = None
     hours: Decimal | None = None
@@ -55,6 +56,7 @@ class ProcessAgg:
     total: Decimal = ZERO
     direct: Decimal = ZERO
     allocated: Decimal = ZERO
+    transferred: Decimal = ZERO
     volume: Decimal = ZERO
     has_volume: bool = False
     uom: str | None = None
@@ -70,6 +72,7 @@ class ProcessAgg:
         self.total += cell.total
         self.direct += cell.direct
         self.allocated += cell.allocated
+        self.transferred += cell.transferred
         self.uom = self.uom or cell.uom
         if cell.volume is not None:
             self.volume += cell.volume
@@ -91,11 +94,13 @@ class ProcessAgg:
             "total_cost": round_money(self.total),
             "direct_cost": round_money(self.direct),
             "allocated_cost": round_money(self.allocated),
+            "transferred_cost": round_money(self.transferred),
             "volume": volume,
             "driver_uom": self.uom,
             "unit_cost": _ratio(self.total, volume),
             "direct_unit_cost": _ratio(self.direct, volume),
             "allocated_unit_cost": _ratio(self.allocated, volume),
+            "transferred_unit_cost": _ratio(self.transferred, volume),
             "productive_hours": hours,
             "productivity_per_hour": _ratio(self.volume_with_hours, hours, "0.01"),
             "cost_per_hour": _ratio(self.cost_with_hours, hours, "0.01"),
@@ -131,10 +136,11 @@ def warehouse(db: Session, filters: Filters) -> dict:
             costs = costs.where(CostResult.unit_id == filters.unit_id)
         for row in db.scalars(costs):
             cell = cells[(row.process_id, row.unit_id, row.period_start)]
-            cell.total, cell.direct, cell.allocated = (
+            cell.total, cell.direct, cell.allocated, cell.transferred = (
                 row.total_cost,
                 row.direct_cost,
                 row.allocated_cost,
+                row.transferred_cost,
             )
             cell.volume, cell.uom = row.driver_quantity, row.unit_of_measure
 

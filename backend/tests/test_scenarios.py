@@ -20,7 +20,17 @@ def test_apply_scenario_altera_volume_custo_variavel_e_direcionador():
         ExpenseFact(3, day, 1, None, None, D("300.00"), "shared"),
     ]
     activities = [ActivityFact(1, 10, 7, D("100")), ActivityFact(1, 20, 8, D("50"))]
-    rules = [RuleSpec(id=1, driver_id=7, valid_from=day, valid_to=None, priority=100)]
+    rules = [
+        RuleSpec(id=1, driver_id=7, valid_from=day, valid_to=None, priority=100),
+        RuleSpec(
+            id=2,
+            driver_id=9,
+            valid_from=day,
+            valid_to=None,
+            priority=100,
+            source_process_ids=frozenset({30}),
+        ),
+    ]
 
     scenario = Scenario(
         volume_change={10: D("10")}, variable_share=D("0.6"), allocation_driver_id=8
@@ -30,6 +40,7 @@ def test_apply_scenario_altera_volume_custo_variavel_e_direcionador():
     assert [e.amount for e in new_expenses] == [D("1060.00"), D("500.00"), D("300.00")]
     assert [a.quantity for a in new_activities] == [D("110"), D("50")]
     assert new_rules[0].driver_id == 8
+    assert new_rules[1].driver_id == 9  # a cascata mantém o próprio direcionador
     # As entradas originais não mudam.
     assert expenses[0].amount == D("1000.00") and rules[0].driver_id == 7
 

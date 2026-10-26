@@ -43,6 +43,7 @@ SELECT p.code, p.name, d.id FROM (VALUES
   ('PICK', 'Separação / picking', 'order_picked'), ('EXP', 'Expedição', 'pallet_shipped'),
   ('TRANS', 'Transporte', 'trip')
 ) AS p(code, name, driver) JOIN drivers d ON d.code = p.driver;
+INSERT INTO processes (code, name) VALUES ('ADM', 'Administração do CD');
 INSERT INTO accounts (code, name, cost_nature) VALUES
   ('6101', 'Mão de obra', NULL), ('6102', 'Armazenagem', NULL), ('6103', 'Separação', NULL),
   ('6104', 'Expedição', NULL), ('6105', 'Fretes', 'freight_third_party'),

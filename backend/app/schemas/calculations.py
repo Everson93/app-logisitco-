@@ -12,6 +12,8 @@ class RuleScope(BaseModel):
     source_account_codes: list[str] = Field(default_factory=list)
     target_unit_codes: list[str] = Field(default_factory=list)
     target_process_codes: list[str] = Field(default_factory=list)
+    # Preenchido, a regra é de cascata: repassa o custo desses processos de apoio.
+    source_process_codes: list[str] = Field(default_factory=list)
 
     def compact(self) -> dict[str, list[str]]:
         return {k: v for k, v in self.model_dump().items() if v}
@@ -86,6 +88,7 @@ class CostResultOut(BaseModel):
     process_id: int | None
     direct_cost: Decimal
     allocated_cost: Decimal
+    transferred_cost: Decimal
     total_cost: Decimal
     driver_id: int | None
     driver_quantity: Decimal | None
@@ -100,7 +103,9 @@ class CostResultOut(BaseModel):
 class AllocationOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    expense_id: int
+    expense_id: int | None
+    source_unit_id: int | None
+    source_process_id: int | None
     rule_id: int
     target_unit_id: int
     target_process_id: int

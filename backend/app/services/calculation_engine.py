@@ -1,10 +1,17 @@
 """Motor de execução mensal (seções 5.2 a 5.5 e Apêndice A).
 
 Funções puras sobre dados já carregados: para um mês de competência, soma custos
-diretos, rateia custos compartilhados pela regra aplicável, calcula custo unitário
-pelo direcionador padrão do processo e compara com o orçamento.
+diretos, rateia custos compartilhados pela regra aplicável, repassa em cascata o custo
+dos processos de apoio, calcula custo unitário pelo direcionador padrão do processo e
+compara com o orçamento.
+
+Cascata (step-down): regras com processo de origem rodam depois do rateio das despesas,
+em ordem de prioridade. Cada uma repassa o custo total do processo de apoio (direto,
+rateado e o que ele já recebeu de cascatas anteriores) aos destinos, pelo direcionador.
+Um processo que já repassou seu custo não recebe mais repasses, o que impede ciclos.
 """
 
+import calendar
 import hashlib
 import json
 from collections import defaultdict
@@ -21,7 +28,7 @@ from app.services.calculations import (
     unit_cost,
 )
 
-ENGINE_VERSION = "calc-v1"
+ENGINE_VERSION = "calc-v2"
 ZERO = Decimal(0)
 
 Target = tuple[int, int | None]  # (unit_id, process_id)
@@ -32,6 +39,7 @@ class IssueCode(StrEnum):
     ZERO_DRIVER_TOTAL = "ZERO_DRIVER_TOTAL"
     NEGATIVE_DRIVER = "NEGATIVE_DRIVER"
     PENDING_CLASSIFICATION = "PENDING_CLASSIFICATION"
+    CASCADE_NOT_TRANSFERRED = "CASCADE_NOT_TRANSFERRED"
 
 
 class RowAlert(StrEnum):
@@ -74,8 +82,21 @@ class RuleSpec:
     source_account_ids: frozenset[int] | None = None
     target_unit_ids: frozenset[int] | None = None
     target_process_ids: frozenset[int] | None = None
+    # Regra de cascata: repassa o custo desses processos em vez de ratear despesas.
+    source_process_ids: frozenset[int] | None = None
+
+    @property
+    def is_cascade(self) -> bool:
+        return self.source_process_ids is not None
+
+    def valid_in(self, period_start: date, period_end: date) -> bool:
+        return self.valid_from <= period_end and (
+            self.valid_to is None or self.valid_to >= period_start
+        )
 
     def covers(self, expense: ExpenseFact) -> bool:
+        if self.is_cascade:
+            return False
         day = expense.competence_date
         if day < self.valid_from or (self.valid_to is not None and day > self.valid_to):
             return False
@@ -98,11 +119,12 @@ class RuleSpec:
 
 @dataclass(frozen=True)
 class Allocation:
-    expense_id: int
+    expense_id: int | None
     rule_id: int
     target: Target
     driver_quantity: Decimal
     amount: Decimal
+    source: Target | None = None  # na cascata, o processo de apoio de origem
 
 
 @dataclass(frozen=True)
@@ -120,6 +142,7 @@ class CostRow:
     process_id: int | None
     direct_cost: Decimal = ZERO
     allocated_cost: Decimal = ZERO
+    transferred_cost: Decimal = ZERO
     driver_id: int | None = None
     driver_quantity: Decimal | None = None
     unit_of_measure: str | None = None
@@ -131,7 +154,7 @@ class CostRow:
 
     @property
     def total_cost(self) -> Decimal:
-        return self.direct_cost + self.allocated_cost
+        return self.direct_cost + self.allocated_cost + self.transferred_cost
 
 
 @dataclass
@@ -194,6 +217,59 @@ def _allocate(
     ], None
 
 
+def _cascade(
+    period_start: date,
+    period_end: date,
+    rows: dict[Target, CostRow],
+    row,
+    rules: list[RuleSpec],
+    activities: list[ActivityFact],
+) -> tuple[list[Allocation], list[Issue]]:
+    allocations: list[Allocation] = []
+    issues: list[Issue] = []
+    closed: set[int] = set()  # processos que já repassaram o custo
+    cascade_rules = sorted(
+        (r for r in rules if r.is_cascade and r.valid_in(period_start, period_end)),
+        key=lambda r: (r.priority, r.id),
+    )
+    for rule in cascade_rules:
+        sources = rule.source_process_ids or frozenset()
+        closed |= sources
+        drivers: dict[Target, Decimal] = defaultdict(lambda: ZERO)
+        for activity in activities:
+            if rule.eligible(activity) and activity.process_id not in closed:
+                drivers[(activity.unit_id, activity.process_id)] += activity.quantity
+        ordered = dict(sorted(drivers.items(), key=lambda kv: (kv[0][0], kv[0][1] or 0)))
+
+        for source in sorted(rows, key=lambda t: (t[0], t[1] or 0)):
+            unit_id, process_id = source
+            if process_id not in sources:
+                continue
+            if rule.source_unit_ids is not None and unit_id not in rule.source_unit_ids:
+                continue
+            amount = rows[source].total_cost
+            if amount == 0:
+                continue
+            result = allocate_shared_cost(amount, ordered) if amount > 0 else None
+            if result is None or result.pending:
+                issues.append(
+                    Issue(
+                        IssueCode.CASCADE_NOT_TRANSFERRED,
+                        f"Regra {rule.id}: custo do processo de apoio não foi repassado "
+                        "(sem volume elegível ou custo negativo); ficou no processo de origem.",
+                        amount=amount,
+                    )
+                )
+                continue
+            rows[source].transferred_cost -= amount
+            for target, part in result.allocations.items():
+                row(target).transferred_cost += part
+                allocations.append(
+                    Allocation(None, rule.id, target, ordered[target], part, source=source)
+                )
+    return allocations, issues
+
+
 def calculate_month(
     period_start: date,
     expenses: list[ExpenseFact],
@@ -243,13 +319,25 @@ def calculate_month(
     for target in budgets:
         row(target)
 
+    period_end = period_start.replace(
+        day=calendar.monthrange(period_start.year, period_start.month)[1]
+    )
+    transfers, cascade_issues = _cascade(period_start, period_end, rows, row, rules, activities)
+    allocations.extend(transfers)
+    issues.extend(cascade_issues)
+    composition["transferred"] = sum((t.amount for t in transfers), ZERO)
+
     volumes: dict[tuple[int, int, int], Decimal] = defaultdict(lambda: ZERO)
     for activity in activities:
         volumes[(activity.unit_id, activity.process_id, activity.driver_id)] += activity.quantity
 
     for (unit_id, process_id), cost_row in rows.items():
+        # Processo de apoio que repassou todo o custo: não tem unitário nem orçamento próprios.
+        transferred_out = cost_row.transferred_cost < 0 and cost_row.total_cost == 0
         driver = default_drivers.get(process_id) if process_id is not None else None
-        if driver is None:
+        if transferred_out:
+            pass
+        elif driver is None:
             cost_row.alerts.append(RowAlert.NO_DRIVER)
         else:
             cost_row.driver_id, cost_row.unit_of_measure = driver
@@ -261,7 +349,8 @@ def calculate_month(
 
         budget = budgets.get((unit_id, process_id))
         if budget is None:
-            cost_row.alerts.append(RowAlert.MISSING_BUDGET)
+            if not transferred_out:
+                cost_row.alerts.append(RowAlert.MISSING_BUDGET)
         else:
             variance = budget_variance(cost_row.total_cost, budget)
             cost_row.budget_amount = budget

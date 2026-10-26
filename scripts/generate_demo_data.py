@@ -191,6 +191,43 @@ def main() -> None:
     )
     write_transport()
     write_warehouse()
+    write_admin()
+
+
+# Processo de apoio do CD (supervisão, administração, TI): repassado em cascata aos processos
+# operacionais pelas horas produtivas. Fica fora do orçamento, como o rateio do REC.
+ADMIN_COST = {"2026-07": Decimal("14400"), "2026-08": Decimal("14700"), "2026-09": Decimal("15300")}
+
+
+def write_admin() -> None:
+    expenses = []
+    for n, month in enumerate(MONTHS, start=1):
+        expenses.append(
+            [
+                f"{month}-{MONTH_END[month]}",
+                "CD-DEMO-01",
+                "ADM",
+                "6101",
+                "Supervisao e administracao do CD",
+                money(ADMIN_COST[month]),
+                "direct",
+                f"ERP-DEMO-ADM-{n:02d}",
+            ]
+        )
+    write(
+        "adm_despesas_demo.csv",
+        [
+            "competence_date",
+            "unit_code",
+            "process_code",
+            "account_code",
+            "description",
+            "amount",
+            "nature",
+            "source_key",
+        ],
+        expenses,
+    )
 
 
 def write_warehouse() -> None:

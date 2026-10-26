@@ -86,7 +86,7 @@ def test_execucao_completa_confere_com_calculo_manual(client, db_session):
     assert create_rule(client).status_code == 201
     body = run(client).json()
     assert body["status"] == "completed"
-    assert body["rule_version"].startswith("calc-v1:")
+    assert body["rule_version"].startswith("calc-v2:")
 
     units, processes = dims(client)
     results = {

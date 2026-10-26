@@ -15,6 +15,7 @@ SCOPE_KEYS = {
     "source_account_codes": Account,
     "target_unit_codes": Unit,
     "target_process_codes": Process,
+    "source_process_codes": Process,
 }
 EDITABLE_FIELDS = ("name", "valid_from", "valid_to", "scope", "priority", "active")
 
@@ -38,6 +39,14 @@ def _check(db: Session, *, driver_code: str | None, data: dict[str, Any]) -> dic
             if code not in known:
                 details.append({"field": f"scope.{key}", "value": code, "code": "UNKNOWN_CODE"})
 
+    sources = set(scope.get("source_process_codes") or [])
+    if sources and scope.get("source_account_codes"):
+        details.append({"field": "scope.source_account_codes", "code": "NOT_ALLOWED_IN_CASCADE"})
+    for code in sorted(sources & set(scope.get("target_process_codes") or [])):
+        details.append(
+            {"field": "scope.target_process_codes", "value": code, "code": "SOURCE_IS_TARGET"}
+        )
+
     valid_from: date | None = data.get("valid_from")
     valid_to: date | None = data.get("valid_to")
     if valid_from and valid_to and valid_to < valid_from:
@@ -52,6 +61,13 @@ def _overlaps(a: AllocationRule, b: AllocationRule) -> bool:
     a_end = a.valid_to or date.max
     b_end = b.valid_to or date.max
     if a.valid_from > b_end or b.valid_from > a_end:
+        return False
+    # Rateio de despesas e cascata nunca disputam o mesmo custo.
+    a_sources = set((a.scope or {}).get("source_process_codes") or [])
+    b_sources = set((b.scope or {}).get("source_process_codes") or [])
+    if bool(a_sources) != bool(b_sources):
+        return False
+    if a_sources and not a_sources & b_sources:
         return False
     for key in ("source_unit_codes", "source_account_codes"):
         sa = set((a.scope or {}).get(key) or [])

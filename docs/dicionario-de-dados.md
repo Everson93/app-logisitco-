@@ -66,7 +66,7 @@ Em XLSX, células que já são data ou número no Excel são lidas diretamente e
 
 Os cadastros são mantidos pela aba **Cadastros** (`/api/v1/dimensions/{tipo}`). Não são apagados, só desativados. `unit_type` aceita `distribution_center` ou `store`; `cost_nature` aceita `personnel`, `facility`, `shared`, `fleet_own`, `freight_third_party` ou vazio; só as duas últimas mudam cálculos (transporte). O código e a unidade de medida do direcionador não mudam depois de criados.
 
-Dados de demonstração: 3 unidades (`CD-DEMO-01`, `LOJA-DEMO-01`, `LOJA-DEMO-02`) e 5 processos.
+Dados de demonstração: 3 unidades (`CD-DEMO-01`, `LOJA-DEMO-01`, `LOJA-DEMO-02`) e 6 processos: 5 operacionais e um de apoio.
 
 | Processo | Nome | Direcionador padrão | Unidade de medida |
 | --- | --- | --- | --- |
@@ -75,6 +75,9 @@ Dados de demonstração: 3 unidades (`CD-DEMO-01`, `LOJA-DEMO-01`, `LOJA-DEMO-02
 | `PICK` | Separação / picking | `order_picked` | `order` |
 | `EXP` | Expedição | `pallet_shipped` | `pallet` |
 | `TRANS` | Transporte | `trip` | `trip` |
+| `ADM` | Administração do CD (apoio) | nenhum | |
+
+O `ADM` não tem direcionador próprio: o custo dele é repassado em cascata aos processos operacionais do CD pelas horas produtivas (regra de demonstração).
 
 Além do direcionador padrão, o transporte (seção 5.7) usa três direcionadores de volume, importados como atividades do processo `TRANS`:
 
@@ -113,10 +116,10 @@ A natureza da conta (`accounts.cost_nature`) separa o custo de transporte: `flee
 
 | Tabela | Conteúdo |
 | --- | --- |
-| `allocation_rules` | Regra de rateio: direcionador, vigência (`valid_from`, `valid_to`), escopo JSON (`source_unit_codes`, `source_account_codes`, `target_unit_codes`, `target_process_codes`; lista vazia ou ausente vale para todos), prioridade e status. |
-| `calculation_runs` | Execução de cálculo: período, `rule_version` (`calc-v1:<hash>`), status (`completed`, `completed_with_pending`, `superseded`) e resumo da composição. |
-| `cost_results` | Por execução, mês, unidade e processo: custo direto, rateado e total, direcionador e volume, custo unitário (`NUMERIC(18,6)`), orçamento, desvio R$ e % e alertas. |
-| `allocation_results` | Cada parcela de rateio: despesa de origem, regra, unidade e processo de destino, volume e valor. |
+| `allocation_rules` | Regra de rateio: direcionador, vigência (`valid_from`, `valid_to`), escopo JSON (`source_unit_codes`, `source_account_codes`, `target_unit_codes`, `target_process_codes`; lista vazia ou ausente vale para todos), prioridade e status. Com `source_process_codes`, é uma regra de cascata: repassa o custo desses processos de apoio em vez de ratear despesas, e não aceita `source_account_codes`. |
+| `calculation_runs` | Execução de cálculo: período, `rule_version` (`calc-v2:<hash>`), status (`completed`, `completed_with_pending`, `superseded`) e resumo da composição. |
+| `cost_results` | Por execução, mês, unidade e processo: custo direto, rateado, repassado em cascata (`transferred_cost`, negativo no processo de apoio) e total, direcionador e volume, custo unitário (`NUMERIC(18,6)`), orçamento, desvio R$ e % e alertas. |
+| `allocation_results` | Cada parcela de rateio: despesa de origem ou, na cascata, unidade e processo de apoio de origem (`source_unit_id`, `source_process_id`), regra, unidade e processo de destino, volume e valor. |
 | `calculation_issues` | Pendências da execução, com despesa e valor envolvidos. |
 | `audit_logs` | `import.commit`, `allocation_rule.create`, `allocation_rule.update`, `dimension.create`, `dimension.update`, `calculation.run` e `report.export`, com quem, quando, entidade e detalhes. |
 
@@ -155,6 +158,7 @@ A natureza da conta (`accounts.cost_nature`) separa o custo de transporte: `flee
 | `NO_ALLOCATION_RULE` | Custo compartilhado sem regra ativa e vigente para o escopo. |
 | `ZERO_DRIVER_TOTAL` | A regra existe, mas não há volume do direcionador nos destinos. |
 | `NEGATIVE_DRIVER` | O volume dos destinos tem valor negativo. |
+| `CASCADE_NOT_TRANSFERRED` | Regra de cascata sem volume elegível nos destinos (ou processo de apoio com custo negativo): o custo fica no processo de apoio. |
 | `PENDING_CLASSIFICATION` | Despesa marcada como `pending_classification`. |
 
 ### Alertas de resultado e do dashboard

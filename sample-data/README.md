@@ -11,6 +11,7 @@ Todos os dados são **fictícios**, gerados por `scripts/generate_demo_data.py`.
 | `transporte_atividades_demo.csv` | Km rodado, paletes transportados e capacidade nominal em paletes, por mês |
 | `transporte_orcamento_demo.csv` | Orçamento da frota própria |
 | `armazem_atividades_demo.csv` | Horas produtivas do CD por processo (REC, PICK, EXP) e linhas separadas no picking, por mês. A armazenagem fica sem horas de propósito, para mostrar o N/D |
+| `adm_despesas_demo.csv` | Custo da administração do CD (processo de apoio `ADM`), repassado em cascata aos processos operacionais pelas horas produtivas |
 | `casos_invalidos/` | Linhas propositalmente erradas para demonstrar as validações (seção 12) |
 
 Casos em `casos_invalidos/`: valor ausente, data inválida, unidade inexistente, `source_key` repetida, quantidade zero e negativa, orçamento zero com despesa realizada e custo compartilhado sem regra de rateio.

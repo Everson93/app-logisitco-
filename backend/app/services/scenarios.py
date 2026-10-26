@@ -59,8 +59,9 @@ def apply_scenario(
         for e in expenses
     ]
     new_rules = [
+        # O direcionador alternativo vale para o rateio das despesas, não para a cascata.
         replace(r, driver_id=scenario.allocation_driver_id)
-        if scenario.allocation_driver_id is not None
+        if scenario.allocation_driver_id is not None and not r.is_cascade
         else r
         for r in rules
     ]

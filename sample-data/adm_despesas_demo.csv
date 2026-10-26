@@ -1,0 +1,4 @@
+competence_date,unit_code,process_code,account_code,description,amount,nature,source_key
+2026-07-31,CD-DEMO-01,ADM,6101,Supervisao e administracao do CD,14400.00,direct,ERP-DEMO-ADM-01
+2026-08-31,CD-DEMO-01,ADM,6101,Supervisao e administracao do CD,14700.00,direct,ERP-DEMO-ADM-02
+2026-09-30,CD-DEMO-01,ADM,6101,Supervisao e administracao do CD,15300.00,direct,ERP-DEMO-ADM-03

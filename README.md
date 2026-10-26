@@ -40,7 +40,7 @@ O custo de cada processo logístico (recebimento, armazenagem, picking, expediç
 | 3 — visualização | Dashboard, filtros e relatório CSV | ✅ concluída |
 | Documentação | README, diagramas, dicionário de dados, segurança e estudo de caso | ✅ concluída |
 | 4 — expansão | Variação por volume e eficiência ✅; simulador de cenários ✅; transporte ✅; armazenagem e picking ✅ | ✅ concluída |
-| Pós-MVP | Telas de cadastro ✅; rateio em cascata; publicação com Docker. A autenticação fica para depois. | em andamento |
+| Pós-MVP | Telas de cadastro ✅; rateio em cascata ✅; publicação com Docker. A autenticação fica para depois. | em andamento |
 
 ## Stack
 
@@ -146,21 +146,22 @@ Regras principais:
 | `GET/PATCH /api/v1/allocation-rules/{id}` | Consulta, altera ou desativa (`{"active": false}`) uma regra. |
 | `POST /api/v1/calculations/run` | Executa o cálculo de `period_start` (dia 1) a `period_end` (último dia do mês). |
 | `GET /api/v1/calculations` | Histórico de execuções. |
-| `GET /api/v1/calculations/{id}/results` | Custo direto, rateado, total, volume, custo unitário, orçamento e desvio por mês, unidade e processo. |
-| `GET /api/v1/calculations/{id}/allocations` | Detalhe do rateio: despesa de origem, regra, destino, volume e valor. |
+| `GET /api/v1/calculations/{id}/results` | Custo direto, rateado, repassado em cascata, total, volume, custo unitário, orçamento e desvio por mês, unidade e processo. |
+| `GET /api/v1/calculations/{id}/allocations` | Detalhe do rateio: despesa (ou, na cascata, processo de apoio) de origem, regra, destino, volume e valor. |
 | `GET /api/v1/calculations/{id}/issues` | Pendências, como custo compartilhado sem regra ou sem volume. |
 
 Como o cálculo funciona, mês a mês de competência:
 
 1. **Despesas diretas** somam no par unidade/processo informado.
 2. **Despesas compartilhadas** usam a regra ativa, vigente e cujo escopo cubra a despesa. Vence a regra de menor `priority` e, no empate, a de menor id. O valor é distribuído pelo volume do direcionador da regra entre os destinos elegíveis (`target_unit_codes` e `target_process_codes`; lista vazia significa todos). Os centavos fecham pelo maior resto. Sem regra ou sem volume, nada é rateado: a despesa vira pendência.
-3. **Excluídas** e **sem classificação** não entram no custo, mas aparecem na composição (`summary`).
-4. **Custo unitário** usa o direcionador padrão do processo e fica N/D (com alerta) quando não há volume.
-5. **Orçamento** do mesmo mês, unidade e processo gera o desvio absoluto e o percentual, que fica sem percentual quando o orçamento é zero.
+3. **Cascata.** Regras com `source_process_codes` não rateiam despesas: depois do passo 2, repassam o custo total de um processo de apoio (direto, rateado e o que ele já recebeu) aos destinos, pelo volume do direcionador. Rodam em ordem de prioridade, como um *step-down*: o processo que repassou fica com custo zero (coluna `transferred_cost` negativa) e não recebe mais repasses, o que impede ciclos. Sem volume elegível, o custo fica no processo de apoio e a execução registra `CASCADE_NOT_TRANSFERRED`.
+4. **Excluídas** e **sem classificação** não entram no custo, mas aparecem na composição (`summary`).
+5. **Custo unitário** usa o direcionador padrão do processo e fica N/D (com alerta) quando não há volume.
+6. **Orçamento** do mesmo mês, unidade e processo gera o desvio absoluto e o percentual, que fica sem percentual quando o orçamento é zero.
 
 Cada execução guarda a `rule_version`, um hash das regras ativas. Recalcular cria uma nova execução sem apagar nada. Uma execução anterior só vira `superseded` quando a nova cobre todos os meses dela. Importações confirmadas, alterações de regra e execuções de cálculo ficam registradas em `audit_logs`.
 
-O seed cria uma regra de demonstração: os custos compartilhados do CD são rateados por paletes recebidos.
+O seed cria duas regras de demonstração: os custos compartilhados do CD são rateados por paletes recebidos, e o custo da administração do CD (processo de apoio `ADM`) é repassado em cascata a REC, PICK e EXP pelas horas produtivas.
 
 ## Dashboard e relatório (API)
 

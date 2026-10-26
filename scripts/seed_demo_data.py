@@ -62,6 +62,8 @@ PROCESSES = [
     ("PICK", "Separação / picking", "order_picked"),
     ("EXP", "Expedição", "pallet_shipped"),
     ("TRANS", "Transporte", "trip"),
+    # Processo de apoio: sem direcionador próprio, o custo é repassado em cascata.
+    ("ADM", "Administração do CD", None),
 ]
 ACCOUNTS = [
     ("6101", "Mão de obra operacional", "personnel"),
@@ -111,13 +113,22 @@ def new_batch(db: Session, filename: str, file_type: str, sha: str, total: int) 
     return batch.id
 
 
-DEMO_RULE = {
-    "name": "Demo: custos compartilhados do CD por paletes recebidos",
-    "driver": "pallet_received",
-    "valid_from": date(2026, 1, 1),
-    "scope": {"source_unit_codes": ["CD-DEMO-01"]},
-    "priority": 100,
-}
+DEMO_RULES = [
+    {
+        "name": "Demo: custos compartilhados do CD por paletes recebidos",
+        "driver": "pallet_received",
+        "valid_from": date(2026, 1, 1),
+        "scope": {"source_unit_codes": ["CD-DEMO-01"]},
+        "priority": 100,
+    },
+    {
+        "name": "Demo: cascata da administração do CD por horas produtivas",
+        "driver": "productive_hour",
+        "valid_from": date(2026, 1, 1),
+        "scope": {"source_process_codes": ["ADM"], "target_unit_codes": ["CD-DEMO-01"]},
+        "priority": 100,
+    },
+]
 
 
 def finish_batch(db: Session, batch_id: int | None, inserted: int) -> None:
@@ -220,7 +231,10 @@ def main() -> None:
         processes = upsert_by_code(
             db,
             Process,
-            [{"code": c, "name": n, "default_driver_id": drivers[d]} for c, n, d in PROCESSES],
+            [
+                {"code": c, "name": n, "default_driver_id": drivers[d] if d else None}
+                for c, n, d in PROCESSES
+            ],
         )
         accounts = upsert_by_code(
             db, Account, [{"code": c, "name": n, "cost_nature": k} for c, n, k in ACCOUNTS]
@@ -228,7 +242,11 @@ def main() -> None:
 
         inserted_expenses = sum(
             load_expenses(db, name, units, processes, accounts)
-            for name in ("despesas_demo.csv", "transporte_despesas_demo.csv")
+            for name in (
+                "despesas_demo.csv",
+                "transporte_despesas_demo.csv",
+                "adm_despesas_demo.csv",
+            )
         )
         inserted_activities = sum(
             load_activities(db, name, units, processes, drivers)
@@ -243,22 +261,23 @@ def main() -> None:
             for name in ("orcamento_demo.csv", "transporte_orcamento_demo.csv")
         )
 
-        rule_created = False
-        if db.scalar(select(AllocationRule.id).filter_by(name=DEMO_RULE["name"])) is None:
-            db.add(
-                AllocationRule(
-                    name=DEMO_RULE["name"],
-                    driver_id=drivers[DEMO_RULE["driver"]],
-                    valid_from=DEMO_RULE["valid_from"],
-                    scope=DEMO_RULE["scope"],
-                    priority=DEMO_RULE["priority"],
+        rules_created = 0
+        for rule in DEMO_RULES:
+            if db.scalar(select(AllocationRule.id).filter_by(name=rule["name"])) is None:
+                db.add(
+                    AllocationRule(
+                        name=rule["name"],
+                        driver_id=drivers[rule["driver"]],
+                        valid_from=rule["valid_from"],
+                        scope=rule["scope"],
+                        priority=rule["priority"],
+                    )
                 )
-            )
-            rule_created = True
+                rules_created += 1
 
     print(
         f"Seed concluído: {inserted_expenses} despesas, {inserted_activities} atividades, "
-        f"{inserted_budgets} linhas de orçamento e {int(rule_created)} regra de rateio inseridas."
+        f"{inserted_budgets} linhas de orçamento e {rules_created} regra(s) de rateio inseridas."
     )
 
 
