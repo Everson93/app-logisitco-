@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     app_env: str = "development"
     database_url: str = "postgresql+psycopg://logicost:logicost@localhost:5432/logicost"
     api_prefix: str = "/api/v1"
+    # Pasta do frontend compilado. Vazia em desenvolvimento, onde o Vite serve o frontend.
+    static_dir: str = ""
 
 
 @lru_cache

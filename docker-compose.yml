@@ -7,7 +7,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
       POSTGRES_DB: ${POSTGRES_DB:-logicost}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      # Só na máquina local; em produção, o banco não precisa ficar exposto.
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -15,6 +16,20 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  # API + frontend compilado numa imagem só. Sobe com: docker compose up -d --build app
+  app:
+    build: .
+    image: logicost-intelligence:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-logicost}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-logicost}
+      SEED_DEMO: ${SEED_DEMO:-true}
+    ports:
+      - "${APP_PORT:-8000}:8000"
 
 volumes:
   pgdata:
