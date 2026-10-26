@@ -11,7 +11,7 @@ A especificação completa está em [`docs/especificacao.md`](docs/especificacao
 | Fase | Entrega | Status |
 | --- | --- | --- |
 | 0 — fundação | Repositório, ambiente local, banco, modelo de dados, motor de cálculo e dados sintéticos | ✅ concluída |
-| 1 — dados | Importação CSV, validação, histórico e normalização | ✅ CSV concluído (XLSX a seguir) |
+| 1 — dados | Importação CSV/XLSX, validação, histórico e normalização | ✅ concluída |
 | 2 — cálculo | Regras de rateio, execuções de cálculo, orçamento | pendente |
 | 3 — visualização | Dashboard, filtros e relatório CSV | pendente |
 | 4 — expansão | Transporte, armazenagem, picking e cenários | pendente |
@@ -68,7 +68,7 @@ O fluxo segue a seção 10 da especificação: **prévia → validação → con
 
 | Rota | O que faz |
 | --- | --- |
-| `POST /api/v1/imports/preview` | Recebe o CSV (`file`) e o `file_type` (`expenses`, `activities` ou `budgets`). Devolve colunas, amostra, campos esperados e sugestão de mapeamento. |
+| `POST /api/v1/imports/preview` | Recebe o arquivo CSV ou XLSX (`file`), o `file_type` (`expenses`, `activities` ou `budgets`) e, opcionalmente, a aba do XLSX (`sheet`; padrão: a primeira). Devolve abas, colunas, amostra, campos esperados e sugestão de mapeamento. |
 | `POST /api/v1/imports/{id}/validate` | Recebe o mapeamento, valores padrão e a convenção de datas/números. Devolve linhas válidas, rejeitadas, avisos e erros por linha e coluna. |
 | `POST /api/v1/imports/{id}/commit` | Grava as linhas válidas em uma transação. Registros já importados são ignorados. |
 | `GET /api/v1/imports` | Histórico de lotes, paginado, com filtro por `status` e `file_type`. |
@@ -93,7 +93,8 @@ Regras principais:
 - **Valores padrão (`defaults`):** preenchem campos que não existem como coluna, como a unidade de um arquivo inteiro.
 - **Duplicidade:** `source_key` repetida no mesmo arquivo bloqueia a linha. Se o registro já foi importado antes, ele vira aviso e é ignorado. Reimportar o mesmo arquivo não duplica nada. No orçamento, a chave é período + unidade + processo + conta.
 - **Códigos de erro:** `MISSING_REQUIRED_FIELD`, `INVALID_DATE`, `INVALID_NUMBER`, `INVALID_NATURE`, `INVALID_PERIOD`, `UNKNOWN_UNIT`, `UNKNOWN_PROCESS`, `UNKNOWN_ACCOUNT`, `UNKNOWN_COST_CENTER`, `UNKNOWN_DRIVER`, `UNIT_OF_MEASURE_MISMATCH`, `NEGATIVE_QUANTITY`, `DUPLICATE_SOURCE_KEY`. Os avisos são `ZERO_QUANTITY`, `ZERO_BUDGET` e `ALREADY_IMPORTED`.
-- **Limites:** apenas `.csv`, até 5 MB e 50.000 linhas, em UTF-8 ou Windows-1252, separado por `,`, `;` ou tab.
+- **XLSX:** datas e números que o Excel já guarda como tal são lidos diretamente, sem depender da convenção escolhida. Células digitadas como texto, como `1.234,56`, seguem a convenção. Fórmulas entram pelo último valor calculado e nada é executado. Arquivos com macros (`.xlsm` ou `vbaProject.bin`) são recusados.
+- **Limites:** `.csv` (UTF-8 ou Windows-1252, separado por `,`, `;` ou tab) ou `.xlsx` (até 20 abas), com até 5 MB e 50.000 linhas.
 
 ## Testes
 

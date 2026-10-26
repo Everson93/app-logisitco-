@@ -14,7 +14,7 @@ from app.models import Activity, Budget, Expense, ImportBatch, ImportRowError, I
 from app.repositories.dimensions import load_dimensions
 from app.services.imports.fields import FIELDS, FileType, suggest_mapping
 from app.services.imports.normalize import DateFormat, DecimalSeparator
-from app.services.imports.parsing import FileRejected, ParsedRow, parse_csv
+from app.services.imports.parsing import FileRejected, ParsedRow, parse_file
 from app.services.imports.validation import (
     Issue,
     RowResult,
@@ -34,6 +34,8 @@ FACT_MODELS = {FileType.EXPENSES: Expense, FileType.ACTIVITIES: Activity, FileTy
 @dataclass
 class PreviewResult:
     batch: ImportBatch
+    sheets: list[str]
+    sheet: str | None
     rows: list[dict[str, str]]
     suggested_mapping: dict[str, str]
     same_file_batch_id: int | None
@@ -58,10 +60,16 @@ def _get_batch(db: Session, batch_id: int, *, lock: bool = False) -> ImportBatch
 
 
 def preview(
-    db: Session, *, filename: str, content: bytes, file_type: FileType, uploaded_by: str | None
+    db: Session,
+    *,
+    filename: str,
+    content: bytes,
+    file_type: FileType,
+    uploaded_by: str | None,
+    sheet: str | None = None,
 ) -> PreviewResult:
     try:
-        parsed = parse_csv(filename, content)
+        parsed = parse_file(filename, content, sheet)
     except FileRejected as exc:
         raise AppError(422, exc.code, exc.message) from None
 
@@ -83,12 +91,14 @@ def preview(
     db.add(batch)
     db.flush()
     db.add_all(
-        ImportStagingRow(batch_id=batch.id, row_number=row.row_number, raw=row.values)
+        ImportStagingRow(batch_id=batch.id, row_number=row.row_number, raw=row.to_staging())
         for row in parsed.rows
     )
     db.commit()
     return PreviewResult(
         batch=batch,
+        sheets=parsed.sheets,
+        sheet=parsed.sheet,
         rows=[row.values for row in parsed.rows[:PREVIEW_ROWS]],
         suggested_mapping=suggest_mapping(file_type, parsed.columns),
         same_file_batch_id=same_file,
@@ -168,7 +178,7 @@ def _run_validation(db: Session, batch: ImportBatch) -> list[RowResult]:
         .where(ImportStagingRow.batch_id == batch.id)
         .order_by(ImportStagingRow.row_number)
     )
-    results = [validator.validate(ParsedRow(s.row_number, s.raw)) for s in staged]
+    results = [validator.validate(ParsedRow.from_staging(s.row_number, s.raw)) for s in staged]
     mark_duplicates(file_type, results, _existing_keys(db, file_type, results))
     return results
 

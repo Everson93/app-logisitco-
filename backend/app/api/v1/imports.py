@@ -31,8 +31,9 @@ DEMO_USER = "demo"
 @router.post("/preview", response_model=PreviewOut, status_code=201)
 async def preview(
     db: Db,
-    file: Annotated[UploadFile, File(description="Arquivo CSV")],
+    file: Annotated[UploadFile, File(description="Arquivo CSV ou XLSX")],
     file_type: Annotated[FileType, Form()],
+    sheet: Annotated[str | None, Form(description="Aba do XLSX; padrão: a primeira")] = None,
 ) -> PreviewOut:
     content = await file.read(MAX_FILE_BYTES + 1)
     if len(content) > MAX_FILE_BYTES:
@@ -43,6 +44,7 @@ async def preview(
         content=content,
         file_type=file_type,
         uploaded_by=DEMO_USER,
+        sheet=sheet or None,
     )
     warnings = []
     if result.same_file_batch_id is not None:
@@ -53,6 +55,8 @@ async def preview(
     return PreviewOut(
         batch=BatchOut.model_validate(result.batch),
         columns=result.batch.columns or [],
+        sheets=result.sheets,
+        sheet=result.sheet,
         rows=result.rows,
         fields=[
             FieldOut(name=f.name, kind=f.kind.value, required=f.required) for f in FIELDS[file_type]

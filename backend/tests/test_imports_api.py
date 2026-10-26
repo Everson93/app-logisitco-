@@ -1,3 +1,4 @@
+from datetime import date
 from pathlib import Path
 
 from sqlalchemy import func, select
@@ -207,3 +208,55 @@ def test_historico_de_lotes_e_dimensoes(client):
     dims = client.get("/api/v1/dimensions").json()
     assert [u["code"] for u in dims["units"]] == ["CD-DEMO-01", "LOJA-DEMO-01", "LOJA-DEMO-02"]
     assert {d["code"]: d["unit_of_measure"] for d in dims["drivers"]}["trip"] == "trip"
+
+
+def test_importacao_xlsx_ponta_a_ponta(client, db_session):
+    from tests.test_import_xlsx import HEADER, xlsx
+
+    content = xlsx(
+        {
+            "Leia-me": [["instruções"]],
+            "Despesas": [
+                HEADER,
+                [date(2026, 9, 30), "CD-DEMO-01", "REC", 1234.56, "direct", "NF-1"],
+                ["30/09/2026", "CD-DEMO-01", "PICK", "2.000,00", "direct", "NF-2"],
+            ],
+        }
+    )
+    response = client.post(
+        "/api/v1/imports/preview",
+        files={"file": ("despesas.xlsx", content, "application/octet-stream")},
+        data={"file_type": "expenses", "sheet": "Despesas"},
+    )
+    assert response.status_code == 201, response.text
+    preview = response.json()
+    assert preview["sheets"] == ["Leia-me", "Despesas"]
+    assert preview["sheet"] == "Despesas"
+    assert preview["rows"][0]["Valor"] == "1234.56"
+
+    batch_id = preview["batch"]["id"]
+    validation = client.post(
+        f"/api/v1/imports/{batch_id}/validate",
+        json={
+            "mapping": preview["suggested_mapping"],
+            "date_format": "dmy",
+            "decimal_separator": ",",
+        },
+    ).json()
+    assert validation["issues_total"] == 0, validation["issues"]
+    assert client.post(f"/api/v1/imports/{batch_id}/commit").json()["rows_committed"] == 2
+    with db_session() as db:
+        amounts = sorted(str(a) for a in db.scalars(select(Expense.amount)))
+    assert amounts == ["1234.56", "2000.00"]
+
+
+def test_aba_inexistente(client):
+    from tests.test_import_xlsx import xlsx
+
+    response = client.post(
+        "/api/v1/imports/preview",
+        files={"file": ("x.xlsx", xlsx({"A": [["a"], [1]]}), "application/octet-stream")},
+        data={"file_type": "expenses", "sheet": "B"},
+    )
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "UNKNOWN_SHEET"
