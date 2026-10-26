@@ -25,7 +25,7 @@ from app.services.imports.normalize import (
     parse_date,
     parse_number,
 )
-from app.services.imports.parsing import ParsedRow
+from app.services.imports.parsing import NativeType, ParsedRow
 
 DATE_LABELS = {DateFormat.ISO: "AAAA-MM-DD", DateFormat.DMY: "DD/MM/AAAA"}
 
@@ -118,6 +118,10 @@ class RowValidator:
         self.options = options
         self.dims = dimensions
 
+    def _native(self, row: ParsedRow, name: str) -> NativeType | None:
+        column = self.mapping.get(name)
+        return row.native_types.get(column) if column else None
+
     def _raw(self, row: ParsedRow, name: str) -> str:
         column = self.mapping.get(name)
         value = clean(row.values.get(column)) if column else ""
@@ -142,6 +146,8 @@ class RowValidator:
 
         if spec.kind is FieldKind.DATE:
             fmt = self.options.date_format
+            if self._native(row, spec.name) is NativeType.DATE:
+                fmt = DateFormat.ISO  # data nativa do Excel, já convertida para ISO
             value = parse_date(raw, fmt)
             if value is None:
                 result.issues.append(
@@ -155,7 +161,10 @@ class RowValidator:
             return value
 
         if spec.kind in (FieldKind.MONEY, FieldKind.QUANTITY):
-            value = parse_number(raw, self.options.decimal_separator)
+            separator = self.options.decimal_separator
+            if self._native(row, spec.name) is NativeType.NUMBER:
+                separator = DecimalSeparator.DOT  # número nativo do Excel, sem milhar
+            value = parse_number(raw, separator)
             if value is None:
                 result.issues.append(
                     Issue(

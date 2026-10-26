@@ -33,6 +33,8 @@ class FieldOut(BaseModel):
 class PreviewOut(BaseModel):
     batch: BatchOut
     columns: list[str]
+    sheets: list[str] = Field(description="Abas do XLSX (vazio para CSV).")
+    sheet: str | None = Field(description="Aba lida.")
     rows: list[dict[str, str]]
     fields: list[FieldOut]
     suggested_mapping: dict[str, str]

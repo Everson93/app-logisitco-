@@ -5,7 +5,7 @@ import pytest
 
 from app.services.imports.fields import FileType, normalize_header, suggest_mapping
 from app.services.imports.normalize import DateFormat, DecimalSeparator, parse_date, parse_number
-from app.services.imports.parsing import FileRejected, parse_csv
+from app.services.imports.parsing import FileRejected, parse_file
 
 
 @pytest.mark.parametrize(
@@ -63,7 +63,7 @@ def test_sugere_mapeamento_por_nome_e_apelido():
 
 def test_parse_csv_com_ponto_e_virgula_e_linhas_vazias():
     content = b"a;b\n1;2\n\n3;4\n"
-    parsed = parse_csv("x.csv", content)
+    parsed = parse_file("x.csv", content)
     assert parsed.delimiter == ";"
     assert parsed.columns == ["a", "b"]
     assert [r.values for r in parsed.rows] == [{"a": "1", "b": "2"}, {"a": "3", "b": "4"}]
@@ -71,7 +71,7 @@ def test_parse_csv_com_ponto_e_virgula_e_linhas_vazias():
 
 
 def test_parse_csv_latin1():
-    parsed = parse_csv("x.csv", "descricao\nexpedição\n".encode("cp1252"))
+    parsed = parse_file("x.csv", "descricao\nexpedição\n".encode("cp1252"))
     assert parsed.rows[0].values == {"descricao": "expedição"}
 
 
@@ -86,5 +86,17 @@ def test_parse_csv_latin1():
 )
 def test_parse_csv_rejeita(filename, content, code):
     with pytest.raises(FileRejected) as exc:
-        parse_csv(filename, content)
+        parse_file(filename, content)
     assert exc.value.code == code
+
+
+def test_parse_csv_com_separador_sobrando_no_fim():
+    parsed = parse_file("x.csv", b"a,b,\n1,2,\n")
+    assert parsed.columns == ["a", "b"]
+    assert parsed.rows[0].values == {"a": "1", "b": "2"}
+
+
+def test_parse_csv_coluna_sem_nome_no_meio():
+    with pytest.raises(FileRejected) as exc:
+        parse_file("x.csv", b"a,,b\n1,2,3\n")
+    assert exc.value.code == "MISSING_HEADER"
