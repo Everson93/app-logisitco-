@@ -14,6 +14,7 @@ import type {
   Transport,
   Validation,
   Variance,
+  Warehouse,
 } from "../types/api";
 
 const BASE = "/api/v1";
@@ -80,6 +81,8 @@ export const api = {
     ),
   transport: (f: DashboardFilters) =>
     request<Transport>(`/dashboard/transport?${filterQuery(f)}`),
+  warehouse: (f: DashboardFilters) =>
+    request<Warehouse>(`/dashboard/warehouse?${filterQuery(f)}`),
   reportUrl: (f: DashboardFilters) => `${BASE}/reports/costs.csv?${filterQuery(f)}`,
 
   runCalculation: (periodStart: string, periodEnd: string) =>

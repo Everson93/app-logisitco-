@@ -174,6 +174,42 @@ export interface Transport extends TransportIndicators {
   alerts: DashboardAlert[];
 }
 
+export interface WarehouseIndicators {
+  total_cost: Decimal;
+  direct_cost: Decimal;
+  allocated_cost: Decimal;
+  volume: Decimal | null;
+  driver_uom: string | null;
+  unit_cost: Decimal | null;
+  direct_unit_cost: Decimal | null;
+  allocated_unit_cost: Decimal | null;
+  productive_hours: Decimal | null;
+  productivity_per_hour: Decimal | null;
+  cost_per_hour: Decimal | null;
+  lines: Decimal | null;
+  lines_per_hour: Decimal | null;
+  lines_per_order: Decimal | null;
+}
+
+export type WarehouseMonth = { period: string } & (
+  | { calculated: false }
+  | ({ calculated: true } & WarehouseIndicators)
+);
+
+export interface WarehouseProcess extends WarehouseIndicators {
+  process_id: number;
+  process_code: string;
+  process_name: string;
+  months: WarehouseMonth[];
+}
+
+export interface Warehouse {
+  period: { from: string; to: string };
+  currency: string;
+  items: WarehouseProcess[];
+  alerts: DashboardAlert[];
+}
+
 export interface CalculationRun {
   id: number;
   period_start: string;

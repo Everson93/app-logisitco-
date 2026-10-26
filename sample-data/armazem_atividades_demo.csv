@@ -1,0 +1,13 @@
+activity_date,unit_code,process_code,driver_code,quantity,unit_of_measure,source_key
+2026-07-31,CD-DEMO-01,REC,productive_hour,950,hour,WMS-DEMO-01-REC-hour
+2026-07-31,CD-DEMO-01,PICK,productive_hour,1900,hour,WMS-DEMO-01-PICK-hour
+2026-07-31,CD-DEMO-01,EXP,productive_hour,700,hour,WMS-DEMO-01-EXP-hour
+2026-07-31,CD-DEMO-01,PICK,line_picked,36480,line,WMS-DEMO-01-PICK-line
+2026-08-31,CD-DEMO-01,REC,productive_hour,980,hour,WMS-DEMO-02-REC-hour
+2026-08-31,CD-DEMO-01,PICK,productive_hour,1950,hour,WMS-DEMO-02-PICK-hour
+2026-08-31,CD-DEMO-01,EXP,productive_hour,720,hour,WMS-DEMO-02-EXP-hour
+2026-08-31,CD-DEMO-01,PICK,line_picked,39600,line,WMS-DEMO-02-PICK-line
+2026-09-30,CD-DEMO-01,REC,productive_hour,1000,hour,WMS-DEMO-03-REC-hour
+2026-09-30,CD-DEMO-01,PICK,productive_hour,2120,hour,WMS-DEMO-03-PICK-hour
+2026-09-30,CD-DEMO-01,EXP,productive_hour,790,hour,WMS-DEMO-03-EXP-hour
+2026-09-30,CD-DEMO-01,PICK,line_picked,40788,line,WMS-DEMO-03-PICK-line
