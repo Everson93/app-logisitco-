@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: logicost
+          POSTGRES_PASSWORD: logicost
+          POSTGRES_DB: logicost
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U logicost"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql+psycopg://logicost:logicost@localhost:5432/logicost
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - run: ruff check . ../scripts --config pyproject.toml
+      - run: ruff format --check . ../scripts --config pyproject.toml
+      - run: pytest -q
+      - name: Migrations e seed
+        run: |
+          alembic upgrade head
+          python ../scripts/seed_demo_data.py
+          python ../scripts/seed_demo_data.py
+          alembic downgrade base
