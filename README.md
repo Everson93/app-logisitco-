@@ -11,7 +11,7 @@ A especificação completa está em [`docs/especificacao.md`](docs/especificacao
 | Fase | Entrega | Status |
 | --- | --- | --- |
 | 0 — fundação | Repositório, ambiente local, banco, modelo de dados, motor de cálculo e dados sintéticos | ✅ concluída |
-| 1 — dados | Importação CSV/XLSX, validação, histórico e normalização | pendente |
+| 1 — dados | Importação CSV, validação, histórico e normalização | ✅ CSV concluído (XLSX a seguir) |
 | 2 — cálculo | Regras de rateio, execuções de cálculo, orçamento | pendente |
 | 3 — visualização | Dashboard, filtros e relatório CSV | pendente |
 | 4 — expansão | Transporte, armazenagem, picking e cenários | pendente |
@@ -62,13 +62,49 @@ uvicorn app.main:app --reload
 
 Verifique em <http://localhost:8000/api/v1/health> (`{"status": "ok"}`) e veja a documentação interativa em <http://localhost:8000/docs>.
 
+## Importação de dados (API)
+
+O fluxo segue a seção 10 da especificação: **prévia → validação → confirmação**. Nada é gravado nas tabelas finais antes da confirmação, e as linhas brutas ficam guardadas no lote para rastreabilidade.
+
+| Rota | O que faz |
+| --- | --- |
+| `POST /api/v1/imports/preview` | Recebe o CSV (`file`) e o `file_type` (`expenses`, `activities` ou `budgets`). Devolve colunas, amostra, campos esperados e sugestão de mapeamento. |
+| `POST /api/v1/imports/{id}/validate` | Recebe o mapeamento, valores padrão e a convenção de datas/números. Devolve linhas válidas, rejeitadas, avisos e erros por linha e coluna. |
+| `POST /api/v1/imports/{id}/commit` | Grava as linhas válidas em uma transação. Registros já importados são ignorados. |
+| `GET /api/v1/imports` | Histórico de lotes, paginado, com filtro por `status` e `file_type`. |
+| `GET /api/v1/imports/{id}/errors` | Erros e avisos do lote, paginados. |
+| `GET /api/v1/dimensions` | Unidades, processos, contas, centros de custo e direcionadores ativos. |
+
+Exemplo com `curl`:
+
+```bash
+curl -F file=@sample-data/despesas_demo.csv -F file_type=expenses \
+  http://localhost:8000/api/v1/imports/preview
+# use o "suggested_mapping" devolvido:
+curl -X POST http://localhost:8000/api/v1/imports/1/validate \
+  -H 'Content-Type: application/json' \
+  -d '{"mapping": {"competence_date": "competence_date", "amount": "amount", ...}}'
+curl -X POST http://localhost:8000/api/v1/imports/1/commit
+```
+
+Regras principais:
+
+- **Convenções explícitas:** `date_format` (`iso` = AAAA-MM-DD ou `dmy` = DD/MM/AAAA) e `decimal_separator` (`.` ou `,`). Com `,`, aceita `1234,56`, `1.234,56` e `R$ 10,00`. O que não se encaixa vira erro em vez de ser adivinhado.
+- **Valores padrão (`defaults`):** preenchem campos que não existem como coluna, como a unidade de um arquivo inteiro.
+- **Duplicidade:** `source_key` repetida no mesmo arquivo bloqueia a linha. Se o registro já foi importado antes, ele vira aviso e é ignorado. Reimportar o mesmo arquivo não duplica nada. No orçamento, a chave é período + unidade + processo + conta.
+- **Códigos de erro:** `MISSING_REQUIRED_FIELD`, `INVALID_DATE`, `INVALID_NUMBER`, `INVALID_NATURE`, `INVALID_PERIOD`, `UNKNOWN_UNIT`, `UNKNOWN_PROCESS`, `UNKNOWN_ACCOUNT`, `UNKNOWN_COST_CENTER`, `UNKNOWN_DRIVER`, `UNIT_OF_MEASURE_MISMATCH`, `NEGATIVE_QUANTITY`, `DUPLICATE_SOURCE_KEY`. Os avisos são `ZERO_QUANTITY`, `ZERO_BUDGET` e `ALREADY_IMPORTED`.
+- **Limites:** apenas `.csv`, até 5 MB e 50.000 linhas, em UTF-8 ou Windows-1252, separado por `,`, `;` ou tab.
+
 ## Testes
 
 ```bash
 cd backend
-pytest
+pytest                                   # testes unitários
+TEST_DATABASE_URL=postgresql+psycopg://logicost:SENHA@localhost:5432/logicost_test pytest
 ruff check . ../scripts && ruff format --check . ../scripts
 ```
+
+Os testes de integração da importação só rodam com `TEST_DATABASE_URL`, que deve apontar para um banco **descartável**, porque as tabelas são limpas a cada teste.
 
 Os testes do motor de cálculo cobrem os casos da seção 14 da especificação: custo unitário, volume zero (N/D), orçamento excedido e orçamento zero, rateio proporcional, rateio sem direcionador (pendência) e o fechamento de centavos pelo método do maior resto.
 
