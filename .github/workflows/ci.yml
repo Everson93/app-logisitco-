@@ -21,6 +21,7 @@ jobs:
           --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       DATABASE_URL: postgresql+psycopg://logicost:logicost@localhost:5432/logicost
+      TEST_DATABASE_URL: postgresql+psycopg://logicost:logicost@localhost:5432/logicost
     defaults:
       run:
         working-directory: backend
@@ -35,6 +36,7 @@ jobs:
       - run: pytest -q
       - name: Migrations e seed
         run: |
+          alembic downgrade base
           alembic upgrade head
           python ../scripts/seed_demo_data.py
           python ../scripts/seed_demo_data.py
