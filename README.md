@@ -39,7 +39,7 @@ O custo de cada processo logístico (recebimento, armazenagem, picking, expediç
 | 2 — cálculo | Regras de rateio, execuções de cálculo, orçamento | ✅ concluída |
 | 3 — visualização | Dashboard, filtros e relatório CSV | ✅ concluída |
 | Documentação | README, diagramas, dicionário de dados, segurança e estudo de caso | ✅ concluída |
-| 4 — expansão | Transporte, armazenagem, picking e cenários | pendente |
+| 4 — expansão | Variação por volume e eficiência ✅; cenários, transporte, armazenagem e picking | em andamento |
 
 ## Stack
 
@@ -170,7 +170,10 @@ Todas as rotas recebem `from` e `to` (datas) e, opcionalmente, `unit_id` e `proc
 | `GET /api/v1/dashboard/summary` | Realizado, orçamento, desvio R$ e %, custo unitário, volume, composição (diretos, rateados, excluídos, pendentes) e alertas. |
 | `GET /api/v1/dashboard/trend` | Série mensal. Meses sem cálculo vêm com `calculated: false`. |
 | `GET /api/v1/dashboard/by-process` | Indicadores por processo. |
+| `GET /api/v1/dashboard/variance` | Variação contra um período base (`base_from`, `base_to`) por processo, separada em efeito volume e efeito eficiência (seção 5.6). |
 | `GET /api/v1/reports/costs.csv` | CSV do recorte filtrado, com período, unidade, processo e moeda. Por padrão sai em formato brasileiro (`;` e vírgula decimal, UTF-8 com BOM para o Excel). Use `format=intl` para `,` e ponto decimal. |
+
+Na variação, o efeito volume é quanto o custo mudaria só pela mudança de volume, mantido o custo unitário do período base. O efeito eficiência é o restante: a mudança do custo por unidade. Processos sem volume nos dois períodos, ou com mais de um direcionador, não são decompostos e entram em `not_comparable`, de modo que volume + eficiência + não comparável sempre fecha com a variação total.
 
 O custo unitário só é calculado quando o recorte tem **um único direcionador**. Com mais de um, a API devolve N/D e o alerta `MIXED_DRIVERS`, porque custo por palete e custo por pedido não se somam (seção 5.4). Valores monetários chegam como texto decimal para não perder precisão.
 

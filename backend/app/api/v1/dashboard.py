@@ -46,6 +46,18 @@ def by_process(db: Db, f: Filters) -> list[dict]:
     return service.by_process(db, f)
 
 
+@router.get("/dashboard/variance")
+def variance(
+    db: Db,
+    f: Filters,
+    base_from: Annotated[date, Query(examples=["2026-07-01"])],
+    base_to: Annotated[date, Query(examples=["2026-07-31"])],
+) -> dict:
+    """Variação contra um período base, separada em efeito volume e efeito eficiência."""
+    base = service.Filters(base_from, base_to, f.unit_id, f.process_id)
+    return service.variance(db, base, f)
+
+
 @router.get("/reports/costs.csv", response_class=Response)
 def costs_csv(db: Db, f: Filters, format: str = Query("br", pattern="^(br|intl)$")) -> Response:
     content = service.report_csv(db, f, brazilian=format == "br")

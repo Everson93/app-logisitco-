@@ -83,3 +83,17 @@ export function monthRange(fromMonth: string, toMonth: string): { from: string; 
   const lastDay = new Date(Date.UTC(ty, tm, 0)).getUTCDate();
   return { from: `${fromMonth}-01`, to: `${toMonth}-${String(lastDay).padStart(2, "0")}` };
 }
+
+/** "2026-09" + n meses, no mesmo formato. */
+export function addMonths(month: string, n: number): string {
+  const [y, m] = month.split("-").map(Number);
+  const d = new Date(Date.UTC(y, m - 1 + n, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+/** Meses de `from` a `to`, inclusive, no formato AAAA-MM. */
+export function monthsBetween(from: string, to: string): string[] {
+  const months: string[] = [];
+  for (let m = from; m <= to && months.length < 120; m = addMonths(m, 1)) months.push(m);
+  return months;
+}

@@ -141,3 +141,5 @@ Dados de demonstração: 3 unidades (`CD-DEMO-01`, `LOJA-DEMO-01`, `LOJA-DEMO-02
 | `MISSING_CALCULATION` | Há meses do filtro sem execução de cálculo. |
 | `PENDING_COSTS` | Há custo compartilhado pendente no período. |
 | `MIXED_DRIVERS` | O recorte mistura direcionadores, então o custo unitário não é somado. |
+| `MISSING_BASE_CALCULATION` | Na variação, há meses do período base sem execução de cálculo. |
+| `NOT_COMPARABLE` | Na variação, há processos sem volume comparável nos dois períodos (`MIXED_DRIVERS`, `NO_BASE_VOLUME` ou `NO_CURRENT_VOLUME`). |
