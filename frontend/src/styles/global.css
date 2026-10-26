@@ -391,6 +391,14 @@ details {
     padding: 12px 16px;
   }
 
+  /* Abas numa linha própria, com rolagem horizontal em vez de empilhar. */
+  .tabs {
+    order: 3;
+    flex: 1 1 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
   .grid-2 {
     grid-template-columns: 1fr;
   }
@@ -428,4 +436,15 @@ details {
 
 .share strong {
   color: var(--text);
+}
+
+.notes {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+}
+
+.nowrap {
+  white-space: nowrap;
 }

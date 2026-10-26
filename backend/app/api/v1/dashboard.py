@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.services import audit
 from app.services import dashboard as service
+from app.services import transport as transport_service
 
 router = APIRouter(tags=["dashboard"])
 
@@ -56,6 +57,13 @@ def variance(
     """Variação contra um período base, separada em efeito volume e efeito eficiência."""
     base = service.Filters(base_from, base_to, f.unit_id, f.process_id)
     return service.variance(db, base, f)
+
+
+@router.get("/dashboard/transport")
+def transport(db: Db, f: Filters) -> dict:
+    """Indicadores de transporte: custo por viagem, km e palete, ocupação e frota própria x
+    terceira (seção 5.7). O filtro de processo não se aplica."""
+    return transport_service.transport(db, f)
 
 
 @router.get("/reports/costs.csv", response_class=Response)

@@ -31,16 +31,21 @@ INSERT INTO drivers (code, name, unit_of_measure) VALUES
   ('position_day', 'Posição-dia', 'position_day'),
   ('order_picked', 'Pedido separado', 'order'),
   ('pallet_shipped', 'Palete expedido', 'pallet'),
-  ('trip', 'Viagem', 'trip');
+  ('trip', 'Viagem', 'trip'),
+  ('km', 'Quilômetro rodado', 'km'),
+  ('pallet_transported', 'Palete transportado', 'pallet'),
+  ('pallet_capacity', 'Capacidade nominal em paletes', 'pallet');
 INSERT INTO processes (code, name, default_driver_id)
 SELECT p.code, p.name, d.id FROM (VALUES
   ('REC', 'Recebimento', 'pallet_received'), ('ARM', 'Armazenagem', 'position_day'),
   ('PICK', 'Separação / picking', 'order_picked'), ('EXP', 'Expedição', 'pallet_shipped'),
   ('TRANS', 'Transporte', 'trip')
 ) AS p(code, name, driver) JOIN drivers d ON d.code = p.driver;
-INSERT INTO accounts (code, name) VALUES
-  ('6101', 'Mão de obra'), ('6102', 'Armazenagem'), ('6103', 'Separação'),
-  ('6104', 'Expedição'), ('6105', 'Fretes'), ('6199', 'Compartilhados');
+INSERT INTO accounts (code, name, cost_nature) VALUES
+  ('6101', 'Mão de obra', NULL), ('6102', 'Armazenagem', NULL), ('6103', 'Separação', NULL),
+  ('6104', 'Expedição', NULL), ('6105', 'Fretes', 'freight_third_party'),
+  ('6106', 'Frota própria: combustível', 'fleet_own'),
+  ('6107', 'Frota própria: manutenção', 'fleet_own'), ('6199', 'Compartilhados', NULL);
 """
 
 

@@ -39,7 +39,7 @@ O custo de cada processo logístico (recebimento, armazenagem, picking, expediç
 | 2 — cálculo | Regras de rateio, execuções de cálculo, orçamento | ✅ concluída |
 | 3 — visualização | Dashboard, filtros e relatório CSV | ✅ concluída |
 | Documentação | README, diagramas, dicionário de dados, segurança e estudo de caso | ✅ concluída |
-| 4 — expansão | Variação por volume e eficiência ✅; simulador de cenários ✅; transporte, armazenagem e picking | em andamento |
+| 4 — expansão | Variação por volume e eficiência ✅; simulador de cenários ✅; transporte ✅; armazenagem e picking | em andamento |
 
 ## Stack
 
@@ -176,6 +176,20 @@ Todas as rotas recebem `from` e `to` (datas) e, opcionalmente, `unit_id` e `proc
 Na variação, o efeito volume é quanto o custo mudaria só pela mudança de volume, mantido o custo unitário do período base. O efeito eficiência é o restante: a mudança do custo por unidade. Processos sem volume nos dois períodos, ou com mais de um direcionador, não são decompostos e entram em `not_comparable`, de modo que volume + eficiência + não comparável sempre fecha com a variação total.
 
 O custo unitário só é calculado quando o recorte tem **um único direcionador**. Com mais de um, a API devolve N/D e o alerta `MIXED_DRIVERS`, porque custo por palete e custo por pedido não se somam (seção 5.4). Valores monetários chegam como texto decimal para não perder precisão.
+
+## Transporte (API)
+
+`GET /api/v1/dashboard/transport` recebe `from`, `to` e, opcionalmente, `unit_id`, e devolve os indicadores da seção 5.7 no total e por mês. No frontend, fica na aba **Transporte**.
+
+| Indicador | Cálculo |
+| --- | --- |
+| Custo por viagem | custo de transporte (com rateio) / viagens (`trip`) |
+| Custo por km | custo de transporte / km total rodado (`km`) |
+| Custo por palete | custo de transporte / paletes transportados (`pallet_transported`) |
+| Ocupação | paletes transportados / capacidade nominal (`pallet_capacity`) |
+| Frota própria x terceira | custo direto pelas contas de natureza `fleet_own` e `freight_third_party` |
+
+Sem o volume de um denominador, o indicador fica N/D com um alerta (`NO_KM`, `NO_PALLETS`, `NO_CAPACITY`). Ocupação acima de 100% gera `OCCUPANCY_OVER_100`, porque normalmente indica capacidade cadastrada para o tipo errado de veículo. Os layouts e as contas estão no [dicionário de dados](docs/dicionario-de-dados.md).
 
 ## Simulação de cenários (API)
 

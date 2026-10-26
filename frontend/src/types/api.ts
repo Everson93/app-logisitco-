@@ -144,6 +144,36 @@ export interface ScenarioInput {
   allocation_driver_code: string | null;
 }
 
+export interface TransportIndicators {
+  total_cost: Decimal;
+  direct_cost: Decimal;
+  allocated_cost: Decimal;
+  own_fleet_cost: Decimal;
+  third_party_cost: Decimal;
+  other_direct_cost: Decimal;
+  trips: Decimal | null;
+  km: Decimal | null;
+  pallets: Decimal | null;
+  capacity_pallets: Decimal | null;
+  cost_per_trip: Decimal | null;
+  cost_per_km: Decimal | null;
+  cost_per_pallet: Decimal | null;
+  km_per_trip: Decimal | null;
+  occupancy_percent: Decimal | null;
+}
+
+export type TransportMonth = { period: string } & (
+  | { calculated: false }
+  | ({ calculated: true } & TransportIndicators)
+);
+
+export interface Transport extends TransportIndicators {
+  period: { from: string; to: string };
+  currency: string;
+  months: TransportMonth[];
+  alerts: DashboardAlert[];
+}
+
 export interface CalculationRun {
   id: number;
   period_start: string;
