@@ -40,6 +40,7 @@ O custo de cada processo logístico (recebimento, armazenagem, picking, expediç
 | 3 — visualização | Dashboard, filtros e relatório CSV | ✅ concluída |
 | Documentação | README, diagramas, dicionário de dados, segurança e estudo de caso | ✅ concluída |
 | 4 — expansão | Variação por volume e eficiência ✅; simulador de cenários ✅; transporte ✅; armazenagem e picking ✅ | ✅ concluída |
+| Pós-MVP | Telas de cadastro ✅; rateio em cascata; publicação com Docker. A autenticação fica para depois. | em andamento |
 
 ## Stack
 
@@ -203,6 +204,18 @@ Sem o volume de um denominador, o indicador fica N/D com um alerta (`NO_KM`, `NO
 | Linhas por hora e por pedido | linhas separadas (`line_picked`) / horas produtivas ou pedidos |
 
 Produtividade e custo por hora usam só as unidades e meses que têm horas apontadas, para não dividir o volume de uma loja sem apontamento pelas horas do CD. Processo sem horas fica N/D com o alerta `NO_PRODUCTIVE_HOURS`.
+
+## Cadastros (API)
+
+Unidades, processos, direcionadores, contas e centros de custo são mantidos pela aba **Cadastros** ou pela API. `{tipo}` é `units`, `processes`, `drivers`, `accounts` ou `cost-centers`.
+
+| Rota | O que faz |
+| --- | --- |
+| `GET /api/v1/dimensions/{tipo}` | Lista o cadastro, inclusive os inativos. |
+| `POST /api/v1/dimensions/{tipo}` | Cria. Código repetido devolve `409 DUPLICATE_CODE`. |
+| `PATCH /api/v1/dimensions/{tipo}/{id}` | Altera nome, campos do tipo e `active`. |
+
+Nada é apagado: um cadastro desativado deixa de ser aceito na importação e some dos filtros, mas o histórico importado e calculado continua. O código e a unidade de medida do direcionador não mudam depois de criados, porque são a chave da importação e a base dos volumes já gravados. Processos e centros de custo referenciam outros cadastros pelo código (`default_driver_code`, `unit_code`), que precisa existir e estar ativo. Um direcionador usado por um processo ativo ou por uma regra de rateio ativa não pode ser desativado (`409 DIMENSION_IN_USE`). Criação e alteração ficam na auditoria (`dimension.create`, `dimension.update`).
 
 ## Simulação de cenários (API)
 

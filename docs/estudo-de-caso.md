@@ -117,19 +117,18 @@ Prévia e validação de cada arquivo levam menos de 0,2 s numa máquina de dese
 | Processos com custo unitário calculado | 5 de 5. |
 | Alertas de qualidade encontrados | 5 erros e 2 avisos nos casos inválidos; `OVER_BUDGET` e `MIXED_DRIVERS` no dashboard consolidado. |
 | Reproduzir e rastrear um cálculo | Cada resultado tem execução, `rule_version`, regra, despesa e lote de origem. |
-| Testes automatizados | 119 no backend (pytest, inclusive integração com PostgreSQL) e 14 no frontend (Vitest), rodando no CI a cada PR. |
+| Testes automatizados | 126 no backend (pytest, inclusive integração com PostgreSQL) e 15 no frontend (Vitest), rodando no CI a cada PR. |
 
 ## Limitações
 
 - **Sem autenticação.** O MVP roda com um usuário de demonstração fixo. Os perfis da especificação ainda não existem. Veja [seguranca.md](seguranca.md).
 - **Granularidade mensal.** O cálculo trabalha por mês de competência; não há visão diária ou semanal.
 - **Um direcionador por regra.** Não há rateio em cascata (rateio de um processo para outro) nem por percentual fixo.
-- **Cadastros só por seed ou SQL.** Unidades, processos e contas ainda não têm tela de manutenção.
 - **Moeda única (BRL).**
 - **Sem integração com ERP, WMS ou TMS**, por escolha do escopo do MVP. A entrada é sempre um arquivo.
 
 ## Próximos passos
 
 1. Autenticação com perfis Administrador, Analista e Leitor.
-2. Telas de cadastro e regras de rateio em cascata.
+2. Regras de rateio em cascata.
 3. Publicação com Docker do backend e do frontend, HTTPS e backup.

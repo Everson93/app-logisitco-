@@ -5,12 +5,13 @@ import { useAsync } from "../components/useAsync";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
 import { ImportsPage } from "../features/imports/ImportsPage";
 import { ScenariosPage } from "../features/scenarios/ScenariosPage";
+import { DimensionsPage } from "../features/settings/DimensionsPage";
 import { RulesPage } from "../features/settings/RulesPage";
 import { TransportPage } from "../features/transport/TransportPage";
 import { WarehousePage } from "../features/warehouse/WarehousePage";
 import { api } from "../services/api";
 
-type Tab = "dashboard" | "warehouse" | "transport" | "scenarios" | "imports" | "rules";
+type Tab = "dashboard" | "warehouse" | "transport" | "scenarios" | "imports" | "rules" | "dimensions";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "dashboard", label: "Dashboard" },
@@ -19,6 +20,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "scenarios", label: "Cenários" },
   { id: "imports", label: "Importações" },
   { id: "rules", label: "Regras de rateio" },
+  { id: "dimensions", label: "Cadastros" },
 ];
 
 export function App() {
@@ -55,6 +57,7 @@ export function App() {
         {tab === "scenarios" && <ScenariosPage dimensions={dimensions.data} />}
         {tab === "imports" && <ImportsPage />}
         {tab === "rules" && <RulesPage dimensions={dimensions.data} />}
+        {tab === "dimensions" && <DimensionsPage onChanged={dimensions.reload} />}
       </main>
     </div>
   );

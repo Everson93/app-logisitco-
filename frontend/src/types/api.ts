@@ -36,6 +36,23 @@ export interface Dimensions {
   cost_centers: { id: number; code: string; name: string }[];
 }
 
+export type DimensionKind = "units" | "processes" | "drivers" | "accounts" | "cost-centers";
+
+/** Linha de cadastro: campos comuns e os específicos de cada tipo. */
+export interface DimensionItem {
+  id: number;
+  code: string;
+  name: string;
+  active: boolean;
+  unit_type?: string;
+  unit_of_measure?: string;
+  default_driver_id?: number | null;
+  default_driver_code?: string | null;
+  cost_nature?: string | null;
+  unit_id?: number | null;
+  unit_code?: string | null;
+}
+
 export interface DashboardAlert {
   code: string;
   severity: "info" | "warning";

@@ -147,6 +147,27 @@ button.secondary,
   color: var(--accent);
 }
 
+.segmented {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.segmented button.active {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 button:disabled {
   opacity: 0.55;
   cursor: not-allowed;
@@ -256,6 +277,7 @@ select {
 }
 
 .table-wrap {
+  position: relative;
   overflow-x: auto;
 }
 

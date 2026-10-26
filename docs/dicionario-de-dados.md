@@ -64,6 +64,8 @@ Em XLSX, células que já são data ou número no Excel são lidas diretamente e
 | `accounts` | `code` (único), `name`, `cost_nature`, `active` | |
 | `cost_centers` | `code` (único), `name`, `unit_id`, `active` | |
 
+Os cadastros são mantidos pela aba **Cadastros** (`/api/v1/dimensions/{tipo}`). Não são apagados, só desativados. `unit_type` aceita `distribution_center` ou `store`; `cost_nature` aceita `fleet_own`, `freight_third_party` ou vazio. O código e a unidade de medida do direcionador não mudam depois de criados.
+
 Dados de demonstração: 3 unidades (`CD-DEMO-01`, `LOJA-DEMO-01`, `LOJA-DEMO-02`) e 5 processos.
 
 | Processo | Nome | Direcionador padrão | Unidade de medida |
@@ -116,7 +118,7 @@ A natureza da conta (`accounts.cost_nature`) separa o custo de transporte: `flee
 | `cost_results` | Por execução, mês, unidade e processo: custo direto, rateado e total, direcionador e volume, custo unitário (`NUMERIC(18,6)`), orçamento, desvio R$ e % e alertas. |
 | `allocation_results` | Cada parcela de rateio: despesa de origem, regra, unidade e processo de destino, volume e valor. |
 | `calculation_issues` | Pendências da execução, com despesa e valor envolvidos. |
-| `audit_logs` | `import.commit`, `allocation_rule.create`, `allocation_rule.update`, `calculation.run` e `report.export`, com quem, quando, entidade e detalhes. |
+| `audit_logs` | `import.commit`, `allocation_rule.create`, `allocation_rule.update`, `dimension.create`, `dimension.update`, `calculation.run` e `report.export`, com quem, quando, entidade e detalhes. |
 
 ## Códigos
 
@@ -136,6 +138,15 @@ A natureza da conta (`accounts.cost_nature`) separa o custo de transporte: `flee
 | `ZERO_QUANTITY` | aviso | Volume zero. |
 | `ZERO_BUDGET` | aviso | Orçamento zero. |
 | `ALREADY_IMPORTED` | aviso | Registro já importado antes. É ignorado na confirmação. |
+
+### Erros dos cadastros
+
+| Código | Quando acontece |
+| --- | --- |
+| `DUPLICATE_CODE` | Já existe um cadastro do mesmo tipo com esse código. |
+| `INVALID_DIMENSION` | Referência a direcionador ou unidade inexistente (`UNKNOWN_DRIVER`, `UNKNOWN_UNIT`) ou inativa (`INACTIVE_DRIVER`, `INACTIVE_UNIT`). |
+| `DIMENSION_IN_USE` | Tentativa de desativar um direcionador que é padrão de um processo ativo (`DEFAULT_DRIVER`) ou usado por uma regra de rateio ativa (`RULE_DRIVER`). |
+| `DIMENSION_NOT_FOUND` | O id não existe. |
 
 ### Pendências do cálculo
 
