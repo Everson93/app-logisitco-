@@ -10,6 +10,7 @@ import type {
   Summary,
   TrendPoint,
   Validation,
+  Variance,
 } from "../types/api";
 
 const BASE = "/api/v1";
@@ -70,6 +71,10 @@ export const api = {
   trend: (f: DashboardFilters) => request<TrendPoint[]>(`/dashboard/trend?${filterQuery(f)}`),
   byProcess: (f: DashboardFilters) =>
     request<ProcessItem[]>(`/dashboard/by-process?${filterQuery(f)}`),
+  variance: (f: DashboardFilters, baseFrom: string, baseTo: string) =>
+    request<Variance>(
+      `/dashboard/variance?${filterQuery(f, { base_from: baseFrom, base_to: baseTo })}`,
+    ),
   reportUrl: (f: DashboardFilters) => `${BASE}/reports/costs.csv?${filterQuery(f)}`,
 
   runCalculation: (periodStart: string, periodEnd: string) =>

@@ -74,6 +74,39 @@ export interface ProcessItem extends Indicators {
   process_name: string;
 }
 
+export interface VarianceItem {
+  process_id: number | null;
+  process_code: string | null;
+  process_name: string;
+  comparable: boolean;
+  reason: "MIXED_DRIVERS" | "NO_BASE_VOLUME" | "NO_CURRENT_VOLUME" | null;
+  driver_uom: string | null;
+  base_cost: Decimal;
+  base_volume: Decimal | null;
+  base_unit_cost: Decimal | null;
+  actual_cost: Decimal;
+  actual_volume: Decimal | null;
+  actual_unit_cost: Decimal | null;
+  expected_cost: Decimal | null;
+  volume_effect: Decimal | null;
+  efficiency_effect: Decimal | null;
+  total_change: Decimal;
+}
+
+export interface Variance {
+  base_period: { from: string; to: string };
+  period: { from: string; to: string };
+  currency: string;
+  base_cost: Decimal;
+  actual_cost: Decimal;
+  total_change: Decimal;
+  volume_effect: Decimal;
+  efficiency_effect: Decimal;
+  not_comparable: Decimal;
+  items: VarianceItem[];
+  alerts: DashboardAlert[];
+}
+
 export interface CalculationRun {
   id: number;
   period_start: string;

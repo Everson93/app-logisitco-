@@ -17,10 +17,11 @@ from sqlalchemy.orm import Session
 from app.core.errors import AppError
 from app.models import CalculationIssue, CostResult, Driver, Expense, Process, Unit
 from app.services.calculation_service import current_run_by_month, month_end, months_between
-from app.services.calculations import budget_variance, round_money
+from app.services.calculations import budget_variance, round_money, volume_efficiency
 
 MAX_MONTHS = 36
 ZERO = Decimal(0)
+CENTS_ZERO = Decimal("0.00")
 
 
 @dataclass(frozen=True)
@@ -146,6 +147,20 @@ def _excluded(db: Session, filters: Filters) -> Decimal:
     return Decimal(db.scalar(stmt))
 
 
+def _missing_alert(
+    code: str, label: str, filters: Filters, current: dict[date, int]
+) -> dict | None:
+    missing = [m for m in filters.months if m not in current]
+    if not missing:
+        return None
+    return {
+        "code": code,
+        "severity": "warning",
+        "message": f"{len(missing)} mês(es) do {label} ainda sem cálculo executado.",
+        "months": [m.isoformat() for m in missing],
+    }
+
+
 def summary(db: Session, filters: Filters) -> dict:
     current = _current(db, filters)
     rows = _results(db, filters, current)
@@ -157,16 +172,9 @@ def summary(db: Session, filters: Filters) -> dict:
     excluded = _excluded(db, filters)
 
     alerts = []
-    missing = [m for m in filters.months if m not in current]
+    missing = _missing_alert("MISSING_CALCULATION", "período", filters, current)
     if missing:
-        alerts.append(
-            {
-                "code": "MISSING_CALCULATION",
-                "severity": "warning",
-                "message": f"{len(missing)} mês(es) do período ainda sem cálculo executado.",
-                "months": [m.isoformat() for m in missing],
-            }
-        )
+        alerts.append(missing)
     if indicators["variance_amount"] is not None and indicators["variance_amount"] > 0:
         alerts.append(
             {
@@ -266,6 +274,111 @@ def by_process(db: Session, filters: Filters) -> list[dict]:
             }
         )
     return sorted(items, key=lambda i: i["actual_cost"], reverse=True)
+
+
+def _unit_cost(agg: Aggregate) -> Decimal | None:
+    return (agg.actual / agg.quantity).quantize(Decimal("0.0001")) if agg.quantity else None
+
+
+def variance(db: Session, base: Filters, filters: Filters) -> dict:
+    """Variação entre dois períodos por processo: efeito volume x efeito eficiência (seção 5.6).
+
+    Só compara processos com um único direcionador e volume nos dois períodos; os demais
+    entram em `not_comparable`, para que volume + eficiência + não comparável = variação total.
+    """
+    base_current = _current(db, base)
+    current = _current(db, filters)
+    groups: dict[int | None, tuple[Aggregate, Aggregate]] = defaultdict(
+        lambda: (Aggregate(), Aggregate())
+    )
+    for row in _results(db, base, base_current):
+        groups[row.process_id][0].add(row)
+    for row in _results(db, filters, current):
+        groups[row.process_id][1].add(row)
+
+    processes = {p.id: p for p in db.scalars(select(Process))}
+    items = []
+    totals = dict.fromkeys(("volume_effect", "efficiency_effect", "not_comparable"), CENTS_ZERO)
+    for process_id, (before, after) in groups.items():
+        change = after.actual - before.actual
+        drivers = before.driver_ids | after.driver_ids
+        result = None
+        if len(drivers) > 1 or None in drivers:
+            reason = "MIXED_DRIVERS"
+        elif not before.quantity:
+            reason = "NO_BASE_VOLUME"
+        elif after.quantity is None:
+            reason = "NO_CURRENT_VOLUME"
+        else:
+            reason = None
+            result = volume_efficiency(before.actual, before.quantity, after.actual, after.quantity)
+
+        # Arredonda o efeito volume e fecha a eficiência pela diferença, para que as partes
+        # somem exatamente a variação exibida.
+        change = round_money(change)
+        volume_effect = round_money(result.volume_effect) if result else None
+        efficiency_effect = change - volume_effect if result else None
+        if result is not None:
+            totals["volume_effect"] += volume_effect
+            totals["efficiency_effect"] += efficiency_effect
+        else:
+            totals["not_comparable"] += change
+
+        process = processes.get(process_id)
+        uoms = before.uoms | after.uoms
+        items.append(
+            {
+                "process_id": process_id,
+                "process_code": process.code if process else None,
+                "process_name": process.name if process else "Sem processo",
+                "comparable": result is not None,
+                "reason": reason,
+                "driver_uom": next(iter(uoms)) if result is not None else None,
+                "base_cost": round_money(before.actual),
+                "base_volume": before.quantity if result is not None else None,
+                "base_unit_cost": _unit_cost(before) if result is not None else None,
+                "actual_cost": round_money(after.actual),
+                "actual_volume": after.quantity if result is not None else None,
+                "actual_unit_cost": _unit_cost(after) if result is not None else None,
+                "expected_cost": (
+                    round_money(result.expected_cost_at_actual_volume) if result else None
+                ),
+                "volume_effect": volume_effect,
+                "efficiency_effect": efficiency_effect,
+                "total_change": change,
+            }
+        )
+
+    base_total = sum((b.actual for b, _ in groups.values()), ZERO)
+    actual_total = sum((a.actual for _, a in groups.values()), ZERO)
+    alerts = [
+        alert
+        for alert in (
+            _missing_alert("MISSING_BASE_CALCULATION", "período base", base, base_current),
+            _missing_alert("MISSING_CALCULATION", "período analisado", filters, current),
+        )
+        if alert
+    ]
+    if any(not item["comparable"] for item in items):
+        alerts.append(
+            {
+                "code": "NOT_COMPARABLE",
+                "severity": "info",
+                "message": "Há processos sem volume comparável nos dois períodos; a variação "
+                "deles não é decomposta.",
+            }
+        )
+    return {
+        "base_period": {"from": base.date_from, "to": base.date_to},
+        "period": {"from": filters.date_from, "to": filters.date_to},
+        "currency": "BRL",
+        "base_cost": round_money(base_total),
+        "actual_cost": round_money(actual_total),
+        "total_change": round_money(actual_total) - round_money(base_total),
+        **totals,
+        "items": sorted(items, key=lambda i: abs(i["total_change"]), reverse=True),
+        "alerts": alerts,
+    }
 
 
 REPORT_COLUMNS = [

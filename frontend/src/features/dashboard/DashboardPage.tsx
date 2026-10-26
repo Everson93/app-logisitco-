@@ -18,6 +18,7 @@ import {
 import type { Dimensions, ProcessItem } from "../../types/api";
 import { ProcessChart, TrendChart } from "./Charts";
 import { defaultFilters, Filters, type FilterState } from "./Filters";
+import { VariancePanel } from "./VariancePanel";
 
 function tone(value: string | null): "neutral" | "up" | "down" {
   const n = toNumber(value);
@@ -163,6 +164,13 @@ export function DashboardPage({ dimensions }: { dimensions: Dimensions | null })
               <ProcessTable items={byProcess.data} />
             </div>
           )}
+
+          <VariancePanel
+            fromMonth={filters.fromMonth}
+            toMonth={filters.toMonth}
+            unitId={filters.unitId}
+            processId={filters.processId}
+          />
         </>
       )}
     </section>
