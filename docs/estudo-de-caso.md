@@ -136,4 +136,4 @@ Prévia e validação de cada arquivo levam menos de 0,2 s numa máquina de dese
 ## Próximos passos
 
 1. Autenticação com perfis Administrador, Analista e Leitor.
-2. Publicação com Docker do backend e do frontend, HTTPS e backup.
+2. Rateio por percentual fixo e limite de requisições na importação.

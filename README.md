@@ -27,6 +27,7 @@ O custo de cada processo logístico (recebimento, armazenagem, picking, expediç
 | [Arquitetura](docs/arquitetura.md) | Diagramas de componentes, fluxos de importação e cálculo, e modelo entidade-relacionamento. |
 | [Dicionário de dados](docs/dicionario-de-dados.md) | Layout dos arquivos de importação, tabelas e códigos de erro e alerta. |
 | [Segurança](docs/seguranca.md) | Checklist da seção 13 e o que falta antes de publicar. |
+| [Publicação](docs/publicacao.md) | Imagem Docker, variáveis, HTTPS com proxy reverso e backup. |
 | [Roteiro do vídeo](docs/roteiro-demo.md) | Demonstração de 2 a 4 minutos. |
 | [Especificação](docs/especificacao.md) | Documento original do projeto. |
 
@@ -40,7 +41,7 @@ O custo de cada processo logístico (recebimento, armazenagem, picking, expediç
 | 3 — visualização | Dashboard, filtros e relatório CSV | ✅ concluída |
 | Documentação | README, diagramas, dicionário de dados, segurança e estudo de caso | ✅ concluída |
 | 4 — expansão | Variação por volume e eficiência ✅; simulador de cenários ✅; transporte ✅; armazenagem e picking ✅ | ✅ concluída |
-| Pós-MVP | Telas de cadastro ✅; rateio em cascata ✅; publicação com Docker. A autenticação fica para depois. | em andamento |
+| Pós-MVP | Telas de cadastro ✅; rateio em cascata ✅; publicação com Docker ✅. A autenticação fica para depois. | ✅ concluída |
 
 ## Stack
 
@@ -73,7 +74,18 @@ frontend/
   tests/           vitest + Testing Library
 ```
 
-## Como rodar localmente
+## Como rodar com Docker
+
+O jeito mais rápido de ver a aplicação, com banco, API e frontend:
+
+```bash
+cp .env.example .env            # troque POSTGRES_PASSWORD
+docker compose up -d --build    # http://localhost:8000
+```
+
+As migrations rodam e os dados fictícios são carregados na subida. Detalhes, HTTPS e backup estão em [docs/publicacao.md](docs/publicacao.md).
+
+## Como rodar localmente (desenvolvimento)
 
 Pré-requisitos: Docker, Python 3.12+.
 

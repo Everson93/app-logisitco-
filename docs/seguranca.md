@@ -13,7 +13,9 @@ Este é o checklist da seção 13 da especificação, com o estado atual do MVP.
 | Logs sem conteúdo sensível | ✅ | O log de erro registra método e caminho da requisição, sem corpo nem conteúdo de arquivo. A auditoria guarda IDs, contagens e status. |
 | Dados sintéticos | ✅ | Tudo em `sample-data/` é gerado por `scripts/generate_demo_data.py`. Nenhum dado de empresa real. |
 | Autorização no backend | ⏳ pendente | Não há login. Os perfis Administrador, Analista e Leitor da seção 3 ainda não existem; o usuário é fixo (`demo`). **Antes de publicar**, é preciso autenticação real e checagem de perfil em cada rota, não só no frontend. |
-| HTTPS, backup e limite de requisições | ⏳ pendente | Valem para um ambiente publicado. Localmente, o backend só escuta em `localhost`. |
+| Contêiner e banco | ✅ | A imagem roda sem root (usuário `logicost`), não leva `.env` nem testes, e o Compose expõe o banco só em `127.0.0.1`. |
+| HTTPS e backup | ✅ documentado | [publicacao.md](publicacao.md) mostra HTTPS com proxy reverso (Caddy, com senha enquanto não há login) e backup com `pg_dump`. |
+| Limite de requisições | ⏳ pendente | Ainda não há limite na importação; pode ser feito no proxy reverso. |
 | Atualização de dependências | ⏳ pendente | As versões estão fixadas em `pyproject.toml` e `package-lock.json`. Recomendado ativar o Dependabot ao publicar. |
 | Retenção de arquivos | ⏳ pendente | O arquivo original não é guardado; só as linhas brutas no staging, para auditoria. Ainda não há prazo de retenção nem rotina de exclusão. |
 
