@@ -9,6 +9,7 @@ from app.db.session import get_db
 from app.services import audit
 from app.services import dashboard as service
 from app.services import transport as transport_service
+from app.services import warehouse as warehouse_service
 
 router = APIRouter(tags=["dashboard"])
 
@@ -64,6 +65,13 @@ def transport(db: Db, f: Filters) -> dict:
     """Indicadores de transporte: custo por viagem, km e palete, ocupação e frota própria x
     terceira (seção 5.7). O filtro de processo não se aplica."""
     return transport_service.transport(db, f)
+
+
+@router.get("/dashboard/warehouse")
+def warehouse(db: Db, f: Filters) -> dict:
+    """Armazenagem e separação: custo unitário direto e rateado, produtividade por hora e
+    linhas por pedido (seção 5.8)."""
+    return warehouse_service.warehouse(db, f)
 
 
 @router.get("/reports/costs.csv", response_class=Response)

@@ -52,6 +52,9 @@ DRIVERS = [
     ("km", "Quilômetro rodado", "km"),
     ("pallet_transported", "Palete transportado", "pallet"),
     ("pallet_capacity", "Capacidade nominal em paletes", "pallet"),
+    # Armazenagem e separação (seção 5.8): horas produtivas e linhas separadas.
+    ("productive_hour", "Hora produtiva", "hour"),
+    ("line_picked", "Linha separada", "line"),
 ]
 PROCESSES = [
     ("REC", "Recebimento", "pallet_received"),
@@ -229,7 +232,11 @@ def main() -> None:
         )
         inserted_activities = sum(
             load_activities(db, name, units, processes, drivers)
-            for name in ("atividades_demo.csv", "transporte_atividades_demo.csv")
+            for name in (
+                "atividades_demo.csv",
+                "transporte_atividades_demo.csv",
+                "armazem_atividades_demo.csv",
+            )
         )
         inserted_budgets = sum(
             load_budgets(db, name, units, processes, accounts)

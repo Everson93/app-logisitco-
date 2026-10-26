@@ -39,7 +39,7 @@ O custo de cada processo logístico (recebimento, armazenagem, picking, expediç
 | 2 — cálculo | Regras de rateio, execuções de cálculo, orçamento | ✅ concluída |
 | 3 — visualização | Dashboard, filtros e relatório CSV | ✅ concluída |
 | Documentação | README, diagramas, dicionário de dados, segurança e estudo de caso | ✅ concluída |
-| 4 — expansão | Variação por volume e eficiência ✅; simulador de cenários ✅; transporte ✅; armazenagem e picking | em andamento |
+| 4 — expansão | Variação por volume e eficiência ✅; simulador de cenários ✅; transporte ✅; armazenagem e picking ✅ | ✅ concluída |
 
 ## Stack
 
@@ -190,6 +190,19 @@ O custo unitário só é calculado quando o recorte tem **um único direcionador
 | Frota própria x terceira | custo direto pelas contas de natureza `fleet_own` e `freight_third_party` |
 
 Sem o volume de um denominador, o indicador fica N/D com um alerta (`NO_KM`, `NO_PALLETS`, `NO_CAPACITY`). Ocupação acima de 100% gera `OCCUPANCY_OVER_100`, porque normalmente indica capacidade cadastrada para o tipo errado de veículo. Os layouts e as contas estão no [dicionário de dados](docs/dicionario-de-dados.md).
+
+## Armazém e picking (API)
+
+`GET /api/v1/dashboard/warehouse` recebe `from`, `to` e, opcionalmente, `unit_id` e `process_id`, e devolve os indicadores da seção 5.8 para REC, ARM, PICK e EXP, no total e por mês. No frontend, fica na aba **Armazém**.
+
+| Indicador | Cálculo |
+| --- | --- |
+| Custo unitário direto e rateado | custo direto (ou rateado) / volume do direcionador padrão |
+| Produtividade por hora | volume do direcionador padrão / horas produtivas (`productive_hour`) |
+| Custo por hora | custo do processo / horas produtivas |
+| Linhas por hora e por pedido | linhas separadas (`line_picked`) / horas produtivas ou pedidos |
+
+Produtividade e custo por hora usam só as unidades e meses que têm horas apontadas, para não dividir o volume de uma loja sem apontamento pelas horas do CD. Processo sem horas fica N/D com o alerta `NO_PRODUCTIVE_HOURS`.
 
 ## Simulação de cenários (API)
 

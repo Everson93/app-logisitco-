@@ -82,6 +82,13 @@ Além do direcionador padrão, o transporte (seção 5.7) usa três direcionador
 | `pallet_transported` | `pallet` | Paletes transportados. Não misturar com caixas ou unidades. |
 | `pallet_capacity` | `pallet` | Capacidade nominal em paletes, somada por viagem conforme o tipo de veículo. |
 
+Os indicadores de armazém e picking (seção 5.8) usam mais dois direcionadores, importados como atividades dos processos do armazém:
+
+| Direcionador | Unidade de medida | Definição |
+| --- | --- | --- |
+| `productive_hour` | `hour` | Horas produtivas apontadas no processo, sem pausas e horas paradas. |
+| `line_picked` | `line` | Linhas de pedido separadas no picking (um SKU num pedido é uma linha). |
+
 A natureza da conta (`accounts.cost_nature`) separa o custo de transporte: `fleet_own` é frota própria (contas 6106 combustível e 6107 manutenção nos dados de demonstração) e `freight_third_party` é frete terceirizado (conta 6105). Para não somar provisão e fatura do mesmo frete, importe só um dos dois com a mesma `source_key`.
 
 ## Fatos
@@ -152,6 +159,7 @@ A natureza da conta (`accounts.cost_nature`) separa o custo de transporte: `flee
 | `PENDING_COSTS` | Há custo compartilhado pendente no período. |
 | `MIXED_DRIVERS` | O recorte mistura direcionadores, então o custo unitário não é somado. |
 | `NO_KM`, `NO_PALLETS`, `NO_CAPACITY` | No transporte, falta o volume correspondente no período; o indicador fica N/D. |
+| `NO_PRODUCTIVE_HOURS` | No armazém, o processo não tem horas produtivas no recorte; produtividade e custo por hora ficam N/D. |
 | `OCCUPANCY_OVER_100` | No transporte, paletes transportados acima da capacidade nominal. |
 | `MISSING_BASE_CALCULATION` | Na variação, há meses do período base sem execução de cálculo. |
 | `NOT_COMPARABLE` | Na variação, há processos sem volume comparável nos dois períodos (`MIXED_DRIVERS`, `NO_BASE_VOLUME` ou `NO_CURRENT_VOLUME`). |

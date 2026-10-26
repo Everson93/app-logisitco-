@@ -37,7 +37,7 @@ Arquitetura e modelo de dados estão em [arquitetura.md](arquitetura.md).
 
 ## Resultados com os dados de demonstração
 
-Período: julho a setembro de 2026, 3 unidades e 5 processos. Os dados têm 36 despesas (inclusive R$ 30.000 por mês de custo compartilhado do CD e a frota própria do transporte), 36 registros de volume e 33 linhas de orçamento. A regra de demonstração rateia o custo compartilhado do CD por paletes recebidos.
+Período: julho a setembro de 2026, 3 unidades e 5 processos. Os dados têm 36 despesas (inclusive R$ 30.000 por mês de custo compartilhado do CD e a frota própria do transporte), 48 registros de volume (inclusive horas produtivas e linhas separadas) e 33 linhas de orçamento. A regra de demonstração rateia o custo compartilhado do CD por paletes recebidos.
 
 | Indicador | Valor |
 | --- | --- |
@@ -76,6 +76,26 @@ O transporte tem indicadores próprios (seção 5.7), calculados sobre o custo d
 
 A ocupação subiu todo mês e o custo por palete caiu em agosto, mas setembro voltou a subir: a manutenção da frota própria foi de R$ 4.350 para R$ 6.900 e o combustível por km também aumentou. Mais carga por viagem não compensou o custo da frota.
 
+### Armazém e picking
+
+Os indicadores da seção 5.8 separam o custo unitário em direto e rateado e medem a produtividade pelas horas produtivas do CD:
+
+| Processo | Custo unitário | Direto | Rateado | Produtividade | Custo por hora |
+| --- | --- | --- | --- | --- | --- |
+| REC | R$ 3,4016 / palete | R$ 1,8449 | R$ 1,5568 | 15,26 paletes / h | R$ 48,57 |
+| ARM | R$ 1,4835 / posição-dia | R$ 1,4835 | R$ 0,00 | N/D | N/D |
+| PICK | R$ 4,5755 / pedido | R$ 4,5755 | R$ 0,00 | 5,99 pedidos / h | R$ 27,41 |
+| EXP | R$ 1,8302 / palete | R$ 1,8302 | R$ 0,00 | 20,23 paletes / h | R$ 37,02 |
+
+Quase metade do custo por palete do Recebimento vem do rateio, o que reforça a leitura acima. A armazenagem não tem horas apontadas nos dados de demonstração, então aparece N/D com o alerta `NO_PRODUCTIVE_HOURS` em vez de um número inventado.
+
+| Picking | Julho | Agosto | Setembro |
+| --- | --- | --- | --- |
+| Pedidos por hora | 6,00 | 6,15 | 5,83 |
+| Linhas por hora | 19,20 | 20,31 | 19,24 |
+
+Em setembro o picking separou mais pedidos com menos pedidos por hora: as horas cresceram mais que o volume (2.120 contra 1.950 em agosto). No trimestre foram 3,27 linhas por pedido.
+
 ### Qualidade dos dados
 
 Os arquivos de [`casos_invalidos/`](../sample-data/casos_invalidos/) mostram as validações:
@@ -97,7 +117,7 @@ Prévia e validação de cada arquivo levam menos de 0,2 s numa máquina de dese
 | Processos com custo unitário calculado | 5 de 5. |
 | Alertas de qualidade encontrados | 5 erros e 2 avisos nos casos inválidos; `OVER_BUDGET` e `MIXED_DRIVERS` no dashboard consolidado. |
 | Reproduzir e rastrear um cálculo | Cada resultado tem execução, `rule_version`, regra, despesa e lote de origem. |
-| Testes automatizados | 116 no backend (pytest, inclusive integração com PostgreSQL) e 13 no frontend (Vitest), rodando no CI a cada PR. |
+| Testes automatizados | 119 no backend (pytest, inclusive integração com PostgreSQL) e 14 no frontend (Vitest), rodando no CI a cada PR. |
 
 ## Limitações
 
@@ -110,7 +130,6 @@ Prévia e validação de cada arquivo levam menos de 0,2 s numa máquina de dese
 
 ## Próximos passos
 
-1. **Fase 4 da especificação:** a variação por volume e eficiência, o simulador de cenários e os indicadores de transporte já estão prontos. Faltam os de armazenagem e picking (produtividade por hora, seção 5.8), que pedem horas produtivas como dado novo.
-2. Autenticação com perfis Administrador, Analista e Leitor.
-3. Telas de cadastro e regras de rateio em cascata.
-4. Publicação com Docker do backend e do frontend, HTTPS e backup.
+1. Autenticação com perfis Administrador, Analista e Leitor.
+2. Telas de cadastro e regras de rateio em cascata.
+3. Publicação com Docker do backend e do frontend, HTTPS e backup.

@@ -92,6 +92,16 @@ FLEET_COST = {
 }
 FLEET_BUDGET = (Decimal("20000.00"), Decimal("4500.00"))
 
+# Armazenagem e separação (seção 5.8): horas produtivas por processo do CD e linhas
+# separadas no picking. Só atividades: não muda custo nem orçamento.
+# mês -> {processo: horas produtivas}
+PRODUCTIVE_HOURS = {
+    "2026-07": {"REC": 950, "PICK": 1900, "EXP": 700},
+    "2026-08": {"REC": 980, "PICK": 1950, "EXP": 720},
+    "2026-09": {"REC": 1000, "PICK": 2120, "EXP": 790},
+}
+LINES_PICKED = {"2026-07": 36480, "2026-08": 39600, "2026-09": 40788}
+
 
 def money(value: Decimal) -> str:
     return f"{value.quantize(Decimal('0.01'))}"
@@ -180,6 +190,49 @@ def main() -> None:
         budgets,
     )
     write_transport()
+    write_warehouse()
+
+
+def write_warehouse() -> None:
+    activities = []
+    for n, month in enumerate(MONTHS, start=1):
+        last_day = f"{month}-{MONTH_END[month]}"
+        for process, hours in PRODUCTIVE_HOURS[month].items():
+            activities.append(
+                [
+                    last_day,
+                    "CD-DEMO-01",
+                    process,
+                    "productive_hour",
+                    hours,
+                    "hour",
+                    f"WMS-DEMO-{n:02d}-{process}-hour",
+                ]
+            )
+        activities.append(
+            [
+                last_day,
+                "CD-DEMO-01",
+                "PICK",
+                "line_picked",
+                LINES_PICKED[month],
+                "line",
+                f"WMS-DEMO-{n:02d}-PICK-line",
+            ]
+        )
+    write(
+        "armazem_atividades_demo.csv",
+        [
+            "activity_date",
+            "unit_code",
+            "process_code",
+            "driver_code",
+            "quantity",
+            "unit_of_measure",
+            "source_key",
+        ],
+        activities,
+    )
 
 
 def write_transport() -> None:

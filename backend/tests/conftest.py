@@ -34,7 +34,9 @@ INSERT INTO drivers (code, name, unit_of_measure) VALUES
   ('trip', 'Viagem', 'trip'),
   ('km', 'Quilômetro rodado', 'km'),
   ('pallet_transported', 'Palete transportado', 'pallet'),
-  ('pallet_capacity', 'Capacidade nominal em paletes', 'pallet');
+  ('pallet_capacity', 'Capacidade nominal em paletes', 'pallet'),
+  ('productive_hour', 'Hora produtiva', 'hour'),
+  ('line_picked', 'Linha separada', 'line');
 INSERT INTO processes (code, name, default_driver_id)
 SELECT p.code, p.name, d.id FROM (VALUES
   ('REC', 'Recebimento', 'pallet_received'), ('ARM', 'Armazenagem', 'position_day'),

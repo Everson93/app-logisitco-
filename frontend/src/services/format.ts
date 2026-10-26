@@ -56,7 +56,15 @@ const UOM: Record<string, [string, string]> = {
   order: ["pedidos", "pedido"],
   trip: ["viagens", "viagem"],
   km: ["km", "km"],
+  hour: ["horas", "hora"],
+  line: ["linhas", "linha"],
 };
+
+/** Produtividade: volume por hora produtiva, como "5,99 pedidos / h". */
+export function perHour(value: Numeric, uom?: string | null): string {
+  const n = toNumber(value);
+  return n === null ? ND : `${quantity(n, uom)} / h`;
+}
 
 export function uomLabel(uom: string, singular = false): string {
   const label = UOM[uom];
