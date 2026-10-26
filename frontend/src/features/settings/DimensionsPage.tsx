@@ -20,6 +20,9 @@ const UNIT_TYPES: Record<string, string> = {
 };
 
 const COST_NATURES: Record<string, string> = {
+  personnel: "Pessoal",
+  facility: "Instalações",
+  shared: "Compartilhado",
   fleet_own: "Frota própria",
   freight_third_party: "Frete terceirizado",
 };

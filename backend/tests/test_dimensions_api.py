@@ -131,6 +131,14 @@ def test_conta_e_404(client):
     )
     assert response.status_code == 201
     assert response.json()["cost_nature"] == "fleet_own"
+    response = client.patch(
+        f"{API}/accounts/{response.json()['id']}", json={"cost_nature": "personnel"}
+    )
+    assert response.json()["cost_nature"] == "personnel"
+    response = client.post(
+        f"{API}/accounts", json={"code": "6109", "name": "x", "cost_nature": "y"}
+    )
+    assert response.status_code == 422
     response = client.patch(f"{API}/accounts/999999", json={"name": "x"})
     assert response.status_code == 404
     assert response.json()["error"]["code"] == "DIMENSION_NOT_FOUND"

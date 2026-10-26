@@ -64,7 +64,7 @@ Em XLSX, células que já são data ou número no Excel são lidas diretamente e
 | `accounts` | `code` (único), `name`, `cost_nature`, `active` | |
 | `cost_centers` | `code` (único), `name`, `unit_id`, `active` | |
 
-Os cadastros são mantidos pela aba **Cadastros** (`/api/v1/dimensions/{tipo}`). Não são apagados, só desativados. `unit_type` aceita `distribution_center` ou `store`; `cost_nature` aceita `fleet_own`, `freight_third_party` ou vazio. O código e a unidade de medida do direcionador não mudam depois de criados.
+Os cadastros são mantidos pela aba **Cadastros** (`/api/v1/dimensions/{tipo}`). Não são apagados, só desativados. `unit_type` aceita `distribution_center` ou `store`; `cost_nature` aceita `personnel`, `facility`, `shared`, `fleet_own`, `freight_third_party` ou vazio; só as duas últimas mudam cálculos (transporte). O código e a unidade de medida do direcionador não mudam depois de criados.
 
 Dados de demonstração: 3 unidades (`CD-DEMO-01`, `LOJA-DEMO-01`, `LOJA-DEMO-02`) e 5 processos.
 

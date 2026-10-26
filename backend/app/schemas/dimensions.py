@@ -9,7 +9,9 @@ from pydantic import BaseModel, Field
 Code = Annotated[str, Field(min_length=1, max_length=40, pattern=r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")]
 Name = Annotated[str, Field(min_length=1, max_length=160)]
 UnitType = Literal["distribution_center", "store"]
-CostNature = Literal["fleet_own", "freight_third_party"]
+# Natureza da conta. Só `fleet_own` e `freight_third_party` mudam cálculos (transporte);
+# as demais classificam a conta.
+CostNature = Literal["personnel", "facility", "shared", "fleet_own", "freight_third_party"]
 
 
 class UnitIn(BaseModel):
