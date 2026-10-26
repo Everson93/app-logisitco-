@@ -15,7 +15,9 @@ from app.main import app
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
 
 TABLES = (
-    "import_row_errors, import_staging_rows, expenses, activities, budgets, import_batches, "
+    "audit_logs, calculation_issues, allocation_results, cost_results, calculation_runs, "
+    "allocation_rules, import_row_errors, import_staging_rows, expenses, activities, budgets, "
+    "import_batches, "
     "processes, drivers, cost_centers, accounts, units"
 )
 
@@ -30,9 +32,12 @@ INSERT INTO drivers (code, name, unit_of_measure) VALUES
   ('order_picked', 'Pedido separado', 'order'),
   ('pallet_shipped', 'Palete expedido', 'pallet'),
   ('trip', 'Viagem', 'trip');
-INSERT INTO processes (code, name) VALUES
-  ('REC', 'Recebimento'), ('ARM', 'Armazenagem'), ('PICK', 'Separação / picking'),
-  ('EXP', 'Expedição'), ('TRANS', 'Transporte');
+INSERT INTO processes (code, name, default_driver_id)
+SELECT p.code, p.name, d.id FROM (VALUES
+  ('REC', 'Recebimento', 'pallet_received'), ('ARM', 'Armazenagem', 'position_day'),
+  ('PICK', 'Separação / picking', 'order_picked'), ('EXP', 'Expedição', 'pallet_shipped'),
+  ('TRANS', 'Transporte', 'trip')
+) AS p(code, name, driver) JOIN drivers d ON d.code = p.driver;
 INSERT INTO accounts (code, name) VALUES
   ('6101', 'Mão de obra'), ('6102', 'Armazenagem'), ('6103', 'Separação'),
   ('6104', 'Expedição'), ('6105', 'Fretes'), ('6199', 'Compartilhados');
