@@ -40,15 +40,15 @@ from app.services.calculations import round_money
 MAX_MONTHS = 24
 
 
-def _month_end(day: date) -> date:
+def month_end(day: date) -> date:
     return day.replace(day=calendar.monthrange(day.year, day.month)[1])
 
 
-def _months(start: date, end: date) -> list[date]:
+def months_between(start: date, end: date) -> list[date]:
     months, current = [], start
     while current <= end:
         months.append(current)
-        current = _month_end(current) + timedelta(days=1)
+        current = month_end(current) + timedelta(days=1)
     return months
 
 
@@ -56,7 +56,7 @@ def check_period(period_start: date, period_end: date) -> list[date]:
     details = []
     if period_start.day != 1:
         details.append({"field": "period_start", "code": "MUST_BE_FIRST_DAY_OF_MONTH"})
-    if period_end != _month_end(period_end):
+    if period_end != month_end(period_end):
         details.append({"field": "period_end", "code": "MUST_BE_LAST_DAY_OF_MONTH"})
     if period_end < period_start:
         details.append({"field": "period_end", "code": "BEFORE_PERIOD_START"})
@@ -67,7 +67,7 @@ def check_period(period_start: date, period_end: date) -> list[date]:
             "O período deve cobrir meses inteiros de competência (do dia 1 ao último dia).",
             details,
         )
-    months = _months(period_start, period_end)
+    months = months_between(period_start, period_end)
     if len(months) > MAX_MONTHS:
         raise AppError(422, "INVALID_PERIOD", f"O período pode ter no máximo {MAX_MONTHS} meses.")
     return months
@@ -229,15 +229,17 @@ def run_calculation(
         "rules": [r["id"] for r in snapshot],
     }
 
-    # Execuções anteriores do mesmo intervalo continuam no histórico, mas deixam de valer.
+    # Execuções anteriores totalmente cobertas por esta continuam no histórico, mas deixam
+    # de valer. Uma execução só parcialmente coberta segue vigente nos meses restantes:
+    # em cada mês vale a execução mais recente que o cobre (ver current_run_by_month).
     db.execute(
         update(CalculationRun)
         .where(
             CalculationRun.id != run.id,
             CalculationRun.status != "superseded",
             and_(
-                CalculationRun.period_start <= period_end,
-                CalculationRun.period_end >= period_start,
+                CalculationRun.period_start >= period_start,
+                CalculationRun.period_end <= period_end,
             ),
         )
         .values(status="superseded")
@@ -308,3 +310,22 @@ def run_allocations(db: Session, run_id: int) -> list[AllocationResult]:
             .order_by(AllocationResult.expense_id, AllocationResult.id)
         )
     )
+
+
+def current_run_by_month(db: Session, period_start: date, period_end: date) -> dict[date, int]:
+    """Para cada mês do intervalo, a execução mais recente que o cobre."""
+    runs = db.execute(
+        select(CalculationRun.id, CalculationRun.period_start, CalculationRun.period_end)
+        .where(
+            CalculationRun.status != "superseded",
+            CalculationRun.period_start <= period_end,
+            CalculationRun.period_end >= period_start,
+        )
+        .order_by(CalculationRun.id)
+    )
+    current: dict[date, int] = {}
+    first_month = period_start.replace(day=1)
+    for run_id, start, end in runs:
+        for month in months_between(max(start, first_month), min(end, month_end(period_end))):
+            current[month] = run_id  # ordenado por id: o mais recente sobrescreve
+    return current

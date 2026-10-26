@@ -109,6 +109,14 @@ DEMO_RULE = {
 }
 
 
+def finish_batch(db: Session, batch_id: int | None, inserted: int) -> None:
+    if batch_id is None:
+        return
+    batch = db.get(ImportBatch, batch_id)
+    batch.rows_committed = inserted
+    batch.rows_ignored = batch.rows_valid - inserted
+
+
 def rows_to_load(rows: list[dict], batch_id: int | None) -> list[dict]:
     return rows if batch_id is not None else []
 
@@ -151,6 +159,7 @@ def main() -> None:
                 .returning(Expense.id)
             )
             inserted_expenses += db.execute(stmt).scalar() is not None
+        finish_batch(db, batch_id, inserted_expenses)
 
         rows, sha = read_csv("atividades_demo.csv")
         batch_id = new_batch(db, "atividades_demo.csv", "activities", sha, len(rows))
@@ -172,6 +181,7 @@ def main() -> None:
                 .returning(Activity.id)
             )
             inserted_activities += db.execute(stmt).scalar() is not None
+        finish_batch(db, batch_id, inserted_activities)
 
         rows, sha = read_csv("orcamento_demo.csv")
         batch_id = new_batch(db, "orcamento_demo.csv", "budgets", sha, len(rows))
@@ -194,6 +204,7 @@ def main() -> None:
                 )
             )
             inserted_budgets += 1
+        finish_batch(db, batch_id, inserted_budgets)
 
         rule_created = False
         if db.scalar(select(AllocationRule.id).filter_by(name=DEMO_RULE["name"])) is None:
