@@ -1,0 +1,8 @@
+competence_date,unit_code,process_code,account_code,description,amount,nature,source_key
+2026-09-30,CD-DEMO-01,REC,6101,Linha sem valor monetario,,direct,ERP-INV-0001
+30/13/2026,CD-DEMO-01,ARM,6102,Data em formato invalido,1500.00,direct,ERP-INV-0002
+2026-09-30,CD-NAO-EXISTE,PICK,6103,Unidade nao cadastrada,2000.00,direct,ERP-INV-0003
+2026-09-30,CD-DEMO-01,EXP,6104,Chave de origem repetida (primeira),1000.00,direct,ERP-INV-0004
+2026-09-30,CD-DEMO-01,EXP,6104,Chave de origem repetida (segunda),1000.00,direct,ERP-INV-0004
+2026-09-30,LOJA-DEMO-01,PICK,6103,Despesa realizada com orcamento zero,800.00,direct,ERP-INV-0005
+2026-09-30,LOJA-DEMO-02,,6199,Custo compartilhado sem regra de rateio,5000.00,shared,ERP-INV-0006

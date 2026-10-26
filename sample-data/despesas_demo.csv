@@ -1,0 +1,31 @@
+competence_date,unit_code,process_code,account_code,description,amount,nature,source_key
+2026-07-31,CD-DEMO-01,REC,6101,Mao de obra recebimento,23040.00,direct,ERP-DEMO-0001
+2026-07-31,CD-DEMO-01,ARM,6102,Custo de armazenagem,43200.00,direct,ERP-DEMO-0002
+2026-07-31,CD-DEMO-01,PICK,6103,Custo de picking,51840.00,direct,ERP-DEMO-0003
+2026-07-31,CD-DEMO-01,EXP,6104,Custo de expedicao,25920.00,direct,ERP-DEMO-0004
+2026-07-31,CD-DEMO-01,TRANS,6105,Frete distribuicao,36480.00,direct,ERP-DEMO-0005
+2026-07-31,LOJA-DEMO-01,REC,6101,Mao de obra recebimento loja,5760.00,direct,ERP-DEMO-0006
+2026-07-31,LOJA-DEMO-01,ARM,6102,Custo de estoque loja,4320.00,direct,ERP-DEMO-0007
+2026-07-31,LOJA-DEMO-02,REC,6101,Mao de obra recebimento loja,4992.00,direct,ERP-DEMO-0008
+2026-07-31,LOJA-DEMO-02,ARM,6102,Custo de estoque loja,3744.00,direct,ERP-DEMO-0009
+2026-07-31,CD-DEMO-01,,6199,Custo compartilhado demonstracao,30000.00,shared,ERP-DEMO-0010
+2026-08-31,CD-DEMO-01,REC,6101,Mao de obra recebimento,24000.00,direct,ERP-DEMO-0011
+2026-08-31,CD-DEMO-01,ARM,6102,Custo de armazenagem,45000.00,direct,ERP-DEMO-0012
+2026-08-31,CD-DEMO-01,PICK,6103,Custo de picking,54000.00,direct,ERP-DEMO-0013
+2026-08-31,CD-DEMO-01,EXP,6104,Custo de expedicao,27000.00,direct,ERP-DEMO-0014
+2026-08-31,CD-DEMO-01,TRANS,6105,Frete distribuicao,38000.00,direct,ERP-DEMO-0015
+2026-08-31,LOJA-DEMO-01,REC,6101,Mao de obra recebimento loja,6000.00,direct,ERP-DEMO-0016
+2026-08-31,LOJA-DEMO-01,ARM,6102,Custo de estoque loja,4500.00,direct,ERP-DEMO-0017
+2026-08-31,LOJA-DEMO-02,REC,6101,Mao de obra recebimento loja,5200.00,direct,ERP-DEMO-0018
+2026-08-31,LOJA-DEMO-02,ARM,6102,Custo de estoque loja,3900.00,direct,ERP-DEMO-0019
+2026-08-31,CD-DEMO-01,,6199,Custo compartilhado demonstracao,30000.00,shared,ERP-DEMO-0020
+2026-09-30,CD-DEMO-01,REC,6101,Mao de obra recebimento,25680.00,direct,ERP-DEMO-0021
+2026-09-30,CD-DEMO-01,ARM,6102,Custo de armazenagem,48150.00,direct,ERP-DEMO-0022
+2026-09-30,CD-DEMO-01,PICK,6103,Custo de picking,57780.00,direct,ERP-DEMO-0023
+2026-09-30,CD-DEMO-01,EXP,6104,Custo de expedicao,28890.00,direct,ERP-DEMO-0024
+2026-09-30,CD-DEMO-01,TRANS,6105,Frete distribuicao,40660.00,direct,ERP-DEMO-0025
+2026-09-30,LOJA-DEMO-01,REC,6101,Mao de obra recebimento loja,6420.00,direct,ERP-DEMO-0026
+2026-09-30,LOJA-DEMO-01,ARM,6102,Custo de estoque loja,4815.00,direct,ERP-DEMO-0027
+2026-09-30,LOJA-DEMO-02,REC,6101,Mao de obra recebimento loja,5564.00,direct,ERP-DEMO-0028
+2026-09-30,LOJA-DEMO-02,ARM,6102,Custo de estoque loja,4173.00,direct,ERP-DEMO-0029
+2026-09-30,CD-DEMO-01,,6199,Custo compartilhado demonstracao,30000.00,shared,ERP-DEMO-0030

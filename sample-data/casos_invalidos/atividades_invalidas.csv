@@ -1,0 +1,3 @@
+activity_date,unit_code,process_code,driver_code,quantity,unit_of_measure,source_key
+2026-09-30,LOJA-DEMO-01,PICK,order_picked,0,order,ACT-INV-0001
+2026-09-30,LOJA-DEMO-02,REC,pallet_received,-10,pallet,ACT-INV-0002
