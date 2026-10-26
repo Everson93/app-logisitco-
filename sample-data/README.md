@@ -11,4 +11,4 @@ Todos os dados são **fictícios**, gerados por `scripts/generate_demo_data.py`.
 
 Casos em `casos_invalidos/`: valor ausente, data inválida, unidade inexistente, `source_key` repetida, quantidade zero e negativa, orçamento zero com despesa realizada e custo compartilhado sem regra de rateio.
 
-O custo compartilhado (`nature=shared`) **não** é atribuído automaticamente a nenhuma unidade: ele fica pendente até existir uma regra de rateio válida.
+O custo compartilhado (`nature=shared`) **não** é atribuído automaticamente a nenhuma unidade: ele fica pendente até existir uma regra de rateio válida. O seed cria uma regra de demonstração que rateia esse custo por paletes recebidos. Os resultados esperados estão no [estudo de caso](../docs/estudo-de-caso.md#resultados-com-os-dados-de-demonstração).
